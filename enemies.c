@@ -7,27 +7,70 @@
 
 int CollisionDirectionBull = 1;
 float bullhitimer = 0;
-float knockbacktimer = 0;//for bull
-int knockbackdirection = 1;//for bull
+float knockbacktimer = 0;   // for bull
+int knockbackdirection = 1; // for bull
 
 void spiritupdate(Spirit *en, Player *P, float dt)
 {
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_D))
-        en->speed = 800.0f;
-    else
-        en->speed = 400.f;
+    if (en->alive == false)
+        return;
 
-    float dx = P->x - en->x;
-    float dy = P->y - en->y;
-    float dist = sqrtf(dx * dx + dy * dy);
-
-    // spirit update start
-    if (dist > 1.0f)
+    // phase 1: chasing
+    if (en->spiritcollision == false)
     {
-        en->x += (dx / dist) * en->speed * dt;
-        en->y += (dy / dist) * en->speed * dt;
+        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_D))
+            en->speed += 600.0f * dt;
+        else
+            en->speed = 600.0f;
+
+        float dx = P->x - en->x;
+        float dy = P->y - en->y;
+        float dist = sqrtf(dx * dx + dy * dy);
+
+        if (dist > 1.0f)
+        {
+            en->x += (dx / dist) * en->speed * dt;
+            en->y += (dy / dist) * en->speed * dt;
+        }
+
+        Rectangle spiritrec = {en->x, en->y, 50, 50};
+        Rectangle playerrect = {P->x, P->y, 100, 200};
+        if (CheckCollisionRecs(spiritrec, playerrect))
+        {
+            en->spiritcollision = true;
+            en->cooldown = 0.5f; // wait .5 second before exploding
+        }
     }
-    // spirite update end
+
+    // phase 2: waiting to explode
+    if (en->spiritcollision == true && en->knockbackduration <= 0)
+    {
+        en->cooldown -= dt;
+        if (en->cooldown <= 0)
+        {
+            en->knockbackduration = 0.3f;
+            if (fabsf(P->x - en->x) < 500) // 50 is spirit size
+            {    en->knockdir = (P->x > en->x) ? 1 : -1;
+                en->knockdirY =(P->y+100 < en->y+25) ? -1:1;
+            }
+            else
+                en->knockdir = 0; // no knockback
+        }
+    }
+
+    // phase 3: knockback
+    if (en->knockbackduration > 0)
+    {
+
+        if (en->knockdir != 0)
+        {
+            P->x += en->knockdir * 3000.0f * dt;
+            P->velocityY = en->knockdirY*2000;
+        }
+        en->knockbackduration -= dt;
+        if (en->knockbackduration <= 0)
+            en->alive = false;
+    }
 }
 
 void BullCollisionX(Bull *B)
@@ -203,7 +246,7 @@ void BullUpdateLogic(Bull *bn, Player *P, float dt, float *timer, float *bullhit
         bn->x += knockbackdirection * dt * 2000;
         P->x -= knockbackdirection * dt * 5000;
     }
-    knockbacktimer-=dt;
-    if(knockbacktimer<0)
-        knockbacktimer=0;
+    knockbacktimer -= dt;
+    if (knockbacktimer < 0)
+        knockbacktimer = 0;
 }

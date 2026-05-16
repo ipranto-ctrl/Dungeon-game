@@ -40,7 +40,11 @@ typedef struct
     float speed;
     float damage;
     float cooldown;
+    float knockbackduration;
     bool alive;
+    bool spiritcollision;
+    int knockdir;
+    int knockdirY;
 }Spirit;
 
 void BullCollisionX(Bull *B);

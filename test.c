@@ -37,12 +37,17 @@ int main(void)
         true      // alive
     };
     Spirit en = {
-        (200.0f), // x
-        (200.0f), // y
-        400.0f,
-        50.0f,
-        0.8f,
-        true};
+        200.0f, // x
+        200.0f, // y
+        400.0f, // speed
+        50.0f,  // damage
+        0.0f,   // cooldown
+        0.0f,   // knockbackduration
+        true,   // alive
+        false ,
+        0,
+        0  // spiritcollision
+    };
     Bull bn = {
         1000.f,
         1800.0f,
@@ -94,11 +99,13 @@ int main(void)
 
         BullCollisionY(&bn);
 
-        BullUpdateLogic(&bn, &P, dt, &timer, &bullhitimer, &hitstate,AttackCheck,&AttackRect);
+        BullUpdateLogic(&bn, &P, dt, &timer, &bullhitimer, &hitstate, AttackCheck, &AttackRect);
 
         spiritupdate(&en, &P, dt);
 
+        CollisionX(&P);
 
+        CollisionY(&P);
 
         // camera lerping starts
         camera.target.x += (P.x - camera.target.x) * 6.0f * dt;
@@ -112,7 +119,8 @@ int main(void)
 
         DrawRectangle(P.x, P.y, 100, 200, WHITE);
         DrawRectangle(bn.x, bn.y, 200, 200, BLUE);
-        DrawRectangle(en.x, en.y, 80, 80, RED);
+        if (en.alive == true)
+            DrawRectangle(en.x, en.y, 80, 80, RED);
         if (AttackCheck)
             DrawRectangleRec(AttackRect, RED);
         for (int i = 0; i < MAP_ROWS; i++)
