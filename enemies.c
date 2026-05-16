@@ -50,8 +50,9 @@ void spiritupdate(Spirit *en, Player *P, float dt)
         {
             en->knockbackduration = 0.3f;
             if (fabsf(P->x - en->x) < 500) // 50 is spirit size
-            {    en->knockdir = (P->x > en->x) ? 1 : -1;
-                en->knockdirY =(P->y+100 < en->y+25) ? -1:1;
+            {
+                en->knockdir = (P->x > en->x) ? 1 : -1;
+                en->knockdirY = (P->y + 100 < en->y + 25) ? -1 : 1;
             }
             else
                 en->knockdir = 0; // no knockback
@@ -65,7 +66,7 @@ void spiritupdate(Spirit *en, Player *P, float dt)
         if (en->knockdir != 0)
         {
             P->x += en->knockdir * 3000.0f * dt;
-            P->velocityY = en->knockdirY*2000;
+            P->velocityY = en->knockdirY * 2000;
         }
         en->knockbackduration -= dt;
         if (en->knockbackduration <= 0)
@@ -75,10 +76,15 @@ void spiritupdate(Spirit *en, Player *P, float dt)
 
 void BullCollisionX(Bull *B)
 {
-    for (int i = 0; i < MAP_ROWS; i++)
+    int tileX = (int)(B->x / TILE_SIZE);
+    int tileY = (int)(B->y / TILE_SIZE);
+
+    for (int i = tileY - 1; i <= tileY + 2; i++)
     {
-        for (int j = 0; j < MAP_COLS; j++)
+        for (int j = tileX - 1; j <= tileX + 2; j++)
         {
+            if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS)
+                continue;
             if (map[i][j] == 1)
             {
                 Rectangle tileRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
@@ -107,10 +113,15 @@ void BullCollisionX(Bull *B)
 
 void BullCollisionY(Bull *B)
 {
-    for (int i = 0; i < MAP_ROWS; i++)
+    int tileX = (int)(B->x / TILE_SIZE);
+    int tileY = (int)(B->y / TILE_SIZE);
+
+    for (int i = tileY - 1; i <= tileY + 2; i++)
     {
-        for (int j = 0; j < MAP_COLS; j++)
+        for (int j = tileX - 1; j <= tileX + 2; j++)
         {
+            if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS)
+                continue;
             if (map[i][j] == 1)
             {
                 Rectangle tileRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};

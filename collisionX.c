@@ -4,10 +4,15 @@
 
 void CollisionX(Player *P)
 {
-    for (int i = 0; i < MAP_ROWS; i++)
+    int tileX = (int)(P->x / TILE_SIZE);
+    int tileY = (int)(P->y / TILE_SIZE);
+
+    for (int i = tileY - 1; i <= tileY + 2; i++)
     {
-        for (int j = 0; j < MAP_COLS; j++)
+        for (int j = tileX - 1; j <= tileX + 2; j++)
         {
+            if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS)
+                continue;
             if (map[i][j] == 1)
             {
                 Rectangle tileRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
@@ -28,10 +33,15 @@ void CollisionX(Player *P)
 
 void CollisionY(Player *P)
 {
-    for (int i = 0; i < MAP_ROWS; i++)
+    int tileX = (int)(P->x / TILE_SIZE);
+    int tileY = (int)(P->y / TILE_SIZE);
+
+    for (int i = tileY - 1; i <= tileY + 2; i++)
     {
-        for (int j = 0; j < MAP_COLS; j++)
+        for (int j = tileX - 1; j <= tileX + 2; j++)
         {
+            if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS)
+                continue;
             if (map[i][j] == 1)
             {
                 Rectangle tileRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
@@ -57,4 +67,3 @@ void CollisionY(Player *P)
         }
     }
 }
-
