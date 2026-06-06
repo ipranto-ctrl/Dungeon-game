@@ -68,6 +68,9 @@ typedef struct
     bool alive;
     Rectangle attackrect;
     bool onground;
+    float playerknockbacktimer;
+    float knockbackduration;
+    float maxspeed;
 } Mimic;
 
 void BullCollisionX(Bull *B);
@@ -78,7 +81,6 @@ void BullUpdateLogic(Bull *bn, Player *P, float dt, int AttackCheck, Rectangle *
 void MimicCollisionX(Mimic *M);
 void MimicCollisionY(Mimic *M);
 void UpdateMimicGravity(Mimic *M, float dt);
-void UpdateMimicLogic(Mimic *M, Player *P, float dt);
-
+int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *AttackRect);
 #endif
 

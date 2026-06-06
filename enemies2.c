@@ -77,8 +77,12 @@ void UpdateMimicGravity(Mimic *M, float dt)
     M->onground = false; // reset every frame
 }
 
-void UpdateMimicLogic(Mimic *M, Player *P, float dt)
+int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *AttackRect)
 {
+    if (M->health <= 0)
+        M->alive = false;
+    if (M->alive == false)
+        return 0;
     Rectangle mimicrect = {M->x, M->y, 100, 200};
     Rectangle playerrect = {P->x, P->y, 100, 200};
     if (P->dashing == false)
@@ -120,17 +124,17 @@ void UpdateMimicLogic(Mimic *M, Player *P, float dt)
     {
         M->mstate = MCharging;
     }
-    else if (fabs(P->x - M->x) < 8 * TILE_SIZE)
+    else if (fabs(P->x - M->x) < 10 * TILE_SIZE)
     {
         M->mstate = MChasing;
     }
-    else if (fabs(P->x - M->x) > 8 * TILE_SIZE)
+    else if (fabs(P->x - M->x) > 10 * TILE_SIZE)
     {
         M->mstate = MIdle;
     }
     if (M->mstate == MChasing)
     {
-        M->speed=1000.0f;
+        M->speed = M->maxspeed;
         if (P->x > M->x)
         {
             M->direction = 1;
@@ -140,36 +144,62 @@ void UpdateMimicLogic(Mimic *M, Player *P, float dt)
         M->x += M->direction * M->speed * dt;
     }
 
-    int attackcheckmimic=0;
+    int attackcheckmimic = 0;
     if (M->mstate == MCharging)
     {
         M->attackcooldown -= dt;
         if (M->attackcooldown <= 0)
         {
-            attackcheckmimic=1;
+            attackcheckmimic = 1;
             M->attackcooldown = 1.0;
-            if(M->direction==1)
+            if (M->direction == 1)
             {
-                M->attackrect.x=M->x+100;
-                M->attackrect.y=M->y;
-                M->attackrect.height=200;
-                M->attackrect.width=200;
+                M->attackrect.x = M->x + 100;
+                M->attackrect.y = M->y;
+                M->attackrect.height = 200;
+                M->attackrect.width = 200;
             }
-            if(M->direction==-1)
+            if (M->direction == -1)
             {
-                M->attackrect.x=M->x-200;
-                M->attackrect.y=M->y;
-                M->attackrect.height=200;
-                M->attackrect.width=200;
+                M->attackrect.x = M->x - 200;
+                M->attackrect.y = M->y;
+                M->attackrect.height = 200;
+                M->attackrect.width = 200;
             }
         }
     }
+
     if (attackcheckmimic)
     {
-        if(CheckCollisionRecs(M->attackrect,playerrect))
+        if (CheckCollisionRecs(M->attackrect, playerrect))
         {
-            //attack collision will happen here
+            if (P->iframes <= 0)
+            {
+                P->health -= M->damage;
+                P->iframes = invincibility;
+            }
+            M->playerknockbacktimer = 0.3f; // set here only
         }
     }
-    
+    if (M->playerknockbacktimer > 0)
+    {
+        P->x += M->direction * dt * 3000;
+        M->x -= M->direction * dt * 1500;
+        M->playerknockbacktimer -= dt;
+    }
+    if (attackcheck)
+    {
+        Rectangle mimicrect = {M->x, M->y, 100, 200};
+        if (CheckCollisionRecs(mimicrect, *AttackRect))
+        {
+            M->health -= P->damage;
+            M->knockbackduration = .01f;
+        }
+        if (M->knockbackduration > 0)
+        {
+            P->x -= 3000 * P->dashflag * dt;
+            M->x += 3000 * P->dashflag * dt;
+        }
+    }
+    return attackcheckmimic;
 }

@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-float invincibility=.5f;
+float invincibility=.2f;
 
 void spiritupdate(Spirit *en, Player *P, float dt)
 {
@@ -78,7 +78,7 @@ void spiritupdate(Spirit *en, Player *P, float dt)
 void BullCollisionX(Bull *B)
 {
     if (B->alive == false)
-        return 0;
+        return ;
     int tileX = (int)(B->x / TILE_SIZE);
     int tileY = (int)(B->y / TILE_SIZE);
 
@@ -117,7 +117,7 @@ void BullCollisionX(Bull *B)
 void BullCollisionY(Bull *B)
 {
     if (B->alive == false)
-        return 0;
+        return ;
     int tileX = (int)(B->x / TILE_SIZE);
     int tileY = (int)(B->y / TILE_SIZE);
 
@@ -154,7 +154,7 @@ void BullCollisionY(Bull *B)
 void UpdateBullGravity(Bull *B, float dt)
 {
     if (B->alive == false)
-        return 0;
+        return ;
     B->velocityY += B->gravity * dt;
     B->y += B->velocityY * dt;
 }

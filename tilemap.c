@@ -1,6 +1,6 @@
 #include "tilemap.h"
 
-int currentLevel = 2;
+int currentLevel = 2    ;
 // 0 = empty, 1 = solid, 2 = door (opens when all enemies dead)
 int maps[3][MAP_ROWS][MAP_COLS] = {
     {

@@ -62,8 +62,15 @@ int main(void)
         {500.0f, 1800.0f, 100.0f, 2000.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1, 1, Idle, true},
         {1500.0f, 1800.0f, 100.0f, 2000.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1, 1, Idle, true},
     };
-    int bullCount = 3;
-    float timer = 1;
+    Mimic mimics[3] = {
+        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f,1700.0f},//add amx speed at the end
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f,800.0f},
+        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f,1200.0f},
+    };
+    int mimicCount = 3;
+    int bullCount = 3; ////edited 0 for testing
+
+    // float timer = 1; dont know what i used this for
 
     InitWindow(1440, 1080, "Title:The Name");
     SetExitKey(KEY_DELETE);
@@ -117,7 +124,7 @@ int main(void)
 
             UpdateJump(&P, dt);
 
-            UpdateGravity(&P, dt); //gravity always has to be before collision y or jump wont work
+            UpdateGravity(&P, dt); // gravity always has to be before collision y or jump wont work
 
             CollisionY(&P);
 
@@ -134,6 +141,14 @@ int main(void)
                 BullUpdateLogic(&bulls[i], &P, dt, AttackCheck, &AttackRect);
 
                 CollisionX(&P);
+            }
+            int mimicattaks[mimicCount];
+            for (int i = 0; i < mimicCount; i++)
+            {
+                MimicCollisionX(&mimics[i]);
+                UpdateMimicGravity(&mimics[i], dt);
+                MimicCollisionY(&mimics[i]);
+                mimicattaks[i] = UpdateMimicLogic(&mimics[i], &P, dt, AttackCheck, &AttackRect);
             }
 
             spiritupdate(&en, &P, dt);
@@ -180,7 +195,15 @@ int main(void)
                         DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GRAY);
                 }
             }
-
+            for (int i = 0; i < mimicCount; i++)
+            {
+                if (mimics[i].alive)
+                {
+                    DrawRectangle(mimics[i].x, mimics[i].y, 100, 200, GREEN);
+                    if (mimicattaks[i])
+                        DrawRectangleRec(mimics[i].attackrect, YELLOW);
+                }
+            }
             EndMode2D();
             DrawText(TextFormat("Dash Cooldown: %.1f", P.dashcooldown), 20, 40, 30, WHITE);
             DrawRectangle(20, 20, 200, 20, DARKGRAY);                       // health bar background grey
@@ -216,6 +239,7 @@ int main(void)
                     bulls[i].state = Idle;
                     bulls[i].speed = 100.0f;
                 }
+                
             }
             BeginDrawing();
             ClearBackground(BLACK);
