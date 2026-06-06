@@ -199,6 +199,7 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
         {
             P->x -= 3000 * P->dashflag * dt;
             M->x += 3000 * P->dashflag * dt;
+            M->knockbackduration-=dt;
         }
     }
     return attackcheckmimic;

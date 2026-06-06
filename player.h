@@ -27,12 +27,15 @@ typedef struct
     bool doublejump;
     bool dashing;
     bool alive;
+
+    float spikeknkbacktimer;
+    int spikeknkdirection;
 } Player;
 
 void UpdateDash(Player *P, float dt);
 void UpdateMovementX(Player *P, float dt);
 void UpdateJump(Player *P, float dt);
-void CollisionX(Player *P);
+void CollisionX(Player *P,float dt);
 void UpdateGravity(Player *P, float dt);
 void CollisionY(Player *P);
 int UpdateAttack(Player *P, float dt, Rectangle *AttackRect);

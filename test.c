@@ -43,7 +43,9 @@ int main(void)
         true,     // onground
         true,     // doublejump
         false,    // dashing
-        true      // alive
+        true,     // alive
+        0.0f,      // spikeknkbacktimer
+        0    // spikeknkdirection
     };
     Spirit en = {
         200.0f, // x
@@ -63,12 +65,13 @@ int main(void)
         {1500.0f, 1800.0f, 100.0f, 2000.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1, 1, Idle, true},
     };
     Mimic mimics[3] = {
-        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f,1700.0f},//add amx speed at the end
-        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f,800.0f},
-        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f,1200.0f},
+        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1700.0f}, // add amx speed at the end
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f},
+        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f},
     };
-    int mimicCount = 3;
-    int bullCount = 3; ////edited 0 for testing
+    int mimicCount = 0;
+    int mimicattaks[mimicCount];
+    int bullCount = 0; ////edited 0 for testing
 
     // float timer = 1; dont know what i used this for
 
@@ -120,7 +123,7 @@ int main(void)
 
             UpdateMovementX(&P, dt);
 
-            CollisionX(&P);
+            CollisionX(&P,dt);
 
             UpdateJump(&P, dt);
 
@@ -140,9 +143,9 @@ int main(void)
 
                 BullUpdateLogic(&bulls[i], &P, dt, AttackCheck, &AttackRect);
 
-                CollisionX(&P);
+                CollisionX(&P,dt);
             }
-            int mimicattaks[mimicCount];
+
             for (int i = 0; i < mimicCount; i++)
             {
                 MimicCollisionX(&mimics[i]);
@@ -153,7 +156,7 @@ int main(void)
 
             spiritupdate(&en, &P, dt);
 
-            CollisionX(&P);
+            CollisionX(&P,dt);
 
             CollisionY(&P);
             if (P.health <= 0)
@@ -193,6 +196,8 @@ int main(void)
                 {
                     if (maps[currentLevel][i][j] == 1)
                         DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GRAY);
+                    if (maps[currentLevel][i][j] == 3)
+                        DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
                 }
             }
             for (int i = 0; i < mimicCount; i++)
@@ -232,6 +237,15 @@ int main(void)
                 en.spiritcollision = false;
                 en.knockbackduration = 0;
 
+                for (int i = 0; i < mimicCount; i++)
+                {
+                    mimics[i].alive = true;
+                    mimics[i].health = 100.0f;
+                    mimics[i].mstate = MIdle;
+                    mimics[i].playerknockbacktimer = 0;
+                    mimics[i].knockbackduration = 0;
+                }
+
                 for (int i = 0; i < bullCount; i++)
                 {
                     bulls[i].alive = true;
@@ -239,7 +253,6 @@ int main(void)
                     bulls[i].state = Idle;
                     bulls[i].speed = 100.0f;
                 }
-                
             }
             BeginDrawing();
             ClearBackground(BLACK);
