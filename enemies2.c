@@ -362,33 +362,32 @@ int UpdateArcherLogic(Archer *A, Player *P, float dt, int attackcheck, Rectangle
         if (fabs(P->x - A->x) <= 4 * TILE_SIZE)
             A->x -= A->direction * A->speed * dt;
     }
+
     if (attackcheckArcher)
     {
-        if (attackcheckArcher)
+        // find a free arrow slot and fire it toward the player
+        for (int i = 0; i < arrowCount; i++)
         {
-            // find a free arrow slot and fire it toward the player
-            for (int i = 0; i < arrowCount; i++)
+            if (!arrows[i].alive)
             {
-                if (!arrows[i].alive)
-                {
-                    // aim from archer center toward player center
-                    float dx = (P->x + 50) - (A->x + 50);
-                    float dy = (P->y + 100) - (A->y + 100);
-                    float dist = sqrtf(dx * dx + dy * dy);
-                    if (dist < 1.0f)
-                        dist = 1.0f;
+                // aim from archer center toward player center
+                float dx = (P->x + 50) - (A->x + 50);
+                float dy = (P->y + 100) - (A->y + 100);
+                float dist = sqrtf(dx * dx + dy * dy);
+                if (dist < 1.0f)
+                    dist = 1.0f;
 
-                    arrows[i].x = A->x + 50;
-                    arrows[i].y = A->y + 100;
-                    arrows[i].vx = (dx / dist) * 2000.0f;
-                    arrows[i].vy = (dy / dist) * 2000.0f;
-                    arrows[i].timer = 3.0f;
-                    arrows[i].alive = true;
-                    break;
-                }
+                arrows[i].x = A->x + 50;
+                arrows[i].y = A->y + 100;
+                arrows[i].vx = (dx / dist) * 2000.0f;
+                arrows[i].vy = (dy / dist) * 2000.0f;
+                arrows[i].timer = 3.0f;
+                arrows[i].alive = true;
+                break;
             }
         }
     }
+
     if (attackcheck)
     {
         if (CheckCollisionRecs(*AttackRect, ArcherRect))
@@ -403,7 +402,7 @@ int UpdateArcherLogic(Archer *A, Player *P, float dt, int attackcheck, Rectangle
             A->knockbackduration -= dt;
         }
     }
-    return 0;
+    return attackcheckArcher;
 }
 
 void UpdateArrows(Arrow *arrows, int count, Player *P, float dt)
@@ -448,8 +447,6 @@ void UpdateArrows(Arrow *arrows, int count, Player *P, float dt)
                     P->velocityY = 1200.0f;
                 if (minOverlap == overlapbottom)
                     P->velocityY = -1200.0f;
-                P->health -= 15;
-                P->iframes = invincibility;
                 P->health -= 15;
                 P->iframes = invincibility;
             }
