@@ -147,7 +147,7 @@ int main(void)
                 state = Mainmenu;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText(TextFormat("This is a Pause menu"), screen_w / 2 - 600, screen_h / 2 - 200, 100, RED);
+            DrawText(TextFormat("Already Planning to Give up?"), screen_w / 2 - 600, screen_h / 2 - 200, 100, RED);
             DrawText(TextFormat("Press esc to go to the main menu\nPress enter to continue"), screen_w / 2 - 600, screen_h / 2, 50, RED);
             EndDrawing();
         }
