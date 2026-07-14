@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        false,   // alive
+        true,   // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -147,7 +147,8 @@ int main(void)
                 state = Mainmenu;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText(TextFormat("Already Planning to Give up?"), screen_w / 2 - 600, screen_h / 2 - 200, 100, RED);
+            DrawText(TextFormat("Already Planning to"), screen_w / 2 - 600, screen_h / 2 - 200, 100, RED);
+            DrawText(TextFormat("       Give up?"), screen_w / 2 - 600, screen_h / 2 - 100, 100, RED);
             DrawText(TextFormat("Press esc to go to the main menu\nPress enter to continue"), screen_w / 2 - 600, screen_h / 2, 50, RED);
             EndDrawing();
         }
@@ -375,7 +376,6 @@ int main(void)
             EndDrawing();
         }
     }
-
     CloseWindow();
     return 0;
 }
