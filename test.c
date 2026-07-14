@@ -376,7 +376,6 @@ int main(void)
             EndDrawing();
         }
     }
-    UnloadTexture(spiritChase);
     CloseWindow();
     return 0;
 }
