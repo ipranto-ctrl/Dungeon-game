@@ -82,7 +82,7 @@ int main(void)
         {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f},
         // x       y       health damage atktimer maxatktimer alive knockbackduration
     };
-    int totemCount = 1;
+    int totemCount = 0;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
     int mimicCount = 0;
@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        true,   // alive
+        false,   // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -115,6 +115,7 @@ int main(void)
     // float timer = 1; dont know what i used this for
 
     InitWindow(1440, 1080, "Title:The Name");
+    Texture2D spiritChase = LoadTexture("Sprite/Spirit_Chase100x100.png");
     SetExitKey(KEY_DELETE);
     HideCursor();
     ToggleFullscreen();
@@ -249,8 +250,16 @@ int main(void)
                     DrawRectangle(bulls[i].x, bulls[i].y, 200, 200, BLUE);
             }
 
+            // if (en.alive == true)
+            //     DrawRectangle(en.x, en.y, 80, 80, RED);
             if (en.alive == true)
-                DrawRectangle(en.x, en.y, 80, 80, RED);
+            {
+                Rectangle src = {0, 0, spiritChase.width, spiritChase.height};// reads the entire image, region of the image
+                Rectangle dest = {en.x-20, en.y-20, 100, 100}; //hitbox size, where to draw on screen(destination)
+                Vector2 origin = {0, 0}; //pivot point of rotation
+                if (en.x > P.x) src.width = -src.width; // for mirroring/flipping
+                DrawTexturePro(spiritChase, src, dest, origin, 0.0f, WHITE);
+            }
             if (AttackCheck)
                 DrawRectangleRec(AttackRect, RED);
             for (int i = 0; i < MAP_ROWS; i++)
@@ -376,6 +385,7 @@ int main(void)
             EndDrawing();
         }
     }
+    UnloadTexture(spiritChase);
     CloseWindow();
     return 0;
 }
