@@ -402,15 +402,15 @@ void UpdateDragon(Dragon *D, Player *P, float dt, int attackcheck, Rectangle *at
                 P->health -= D->damage;
                 P->iframes = invincibility;
             }
-            D->playerknockbacktimer = 0.3f;
+            // D->playerknockbacktimer = 0.3f;//removed knockback for the laser
         }
     }
 
-    if (D->playerknockbacktimer > 0)
-    {
-        P->x += D->direction * dt * 3000;
-        D->playerknockbacktimer -= dt;
-    }
+    // if (D->playerknockbacktimer > 0)
+    // {
+    //     P->x += D->direction * dt * 3000;
+    //     D->playerknockbacktimer -= dt;
+    // }
 
     if (attackcheck)
     {

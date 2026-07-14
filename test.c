@@ -278,24 +278,21 @@ int main(void)
                 // else
                 //     DrawRectangle(P.x, P.y, 100, 200, WHITE);
 
-                if (!P.onground)
-            // if (en.alive == true)
-            //     DrawRectangle(en.x, en.y, 80, 80, RED);
-            if (en.alive == true)
-            {
-                Rectangle src = {0, 0, spiritChase.width, spiritChase.height};// reads the entire image, region of the image
-                Rectangle dest = {en.x-20, en.y-20, 100, 100}; //hitbox size, where to draw on screen(destination)
-                Vector2 origin = {0, 0}; //pivot point of rotation
-                if (en.x > P.x) src.width = -src.width; // for mirroring/flipping
-                DrawTexturePro(spiritChase, src, dest, origin, 0.0f, WHITE);
-            }
-            if (AttackCheck)
-                DrawRectangleRec(AttackRect, RED);
-            for (int i = 0; i < MAP_ROWS; i++)
-            {
-                for (int j = 0; j < MAP_COLS; j++)
+                if (en.alive == true)
                 {
-                    // If doublejump is false, it means the player has used it
+                    Rectangle src = {0, 0, spiritChase.width, spiritChase.height}; // reads the entire image, region of the image
+                    Rectangle dest = {en.x - 20, en.y - 20, 100, 100};             // hitbox size, where to draw on screen(destination)
+                    Vector2 origin = {0, 0};                                      // pivot point of rotation
+                    if (en.x > P.x)
+                        src.width = -src.width; // for mirroring/flipping
+                    DrawTexturePro(spiritChase, src, dest, origin, 0.0f, WHITE);
+                }
+
+                if (AttackCheck)
+                    DrawRectangleRec(AttackRect, RED);
+
+                if (!P.onground)
+                {
                     if (!P.doublejump)
                     {
                         currentTex = texDJump;
@@ -320,7 +317,7 @@ int main(void)
                 // --- NEW: Setup rectangles for drawing and flipping ---
                 // A negative width in Raylib's sourceRec flips the texture horizontally
                 float sourceWidth = (float)currentTex.width;
-                
+
                 Vector2 origin = {0.0f, 0.0f};
                 if (P.dashflag == -1)
                 {
@@ -482,7 +479,6 @@ int main(void)
     UnloadTexture(texSprint2);
     UnloadTexture(texJump);
     UnloadTexture(texDJump);
-    }
     UnloadTexture(spiritChase);
     CloseWindow();
     return 0;
