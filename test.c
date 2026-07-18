@@ -82,7 +82,7 @@ int main(void)
         {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f},
         // x       y       health damage atktimer maxatktimer alive knockbackduration
     };
-    int totemCount = 0;
+    int totemCount = 1;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
     int mimicCount = 0;
@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        false,    // alive
+        true,    // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -124,15 +124,21 @@ int main(void)
     SetTargetFPS(60);
 
     // --- NEW: Load Textures ---
-    Texture2D texIdle = LoadTexture("img/char_idle.png");
-    Texture2D texSprint1 = LoadTexture("img/char_sprint1.png");
-    Texture2D texSprint2 = LoadTexture("img/char_sprint2.png");
-    Texture2D texJump = LoadTexture("img/char_jump.png");
+    Texture2D texIdle = LoadTexture("img/idle_right.png");
+    Texture2D texSprint[4];
+    texSprint[0] = LoadTexture("goth girl/right/right_sprint1.png");
+    texSprint[1] = LoadTexture("goth girl/right/right_sprint2.png");
+    texSprint[2] = LoadTexture("goth girl/right/right_sprint3.png");
+    texSprint[3] = LoadTexture("goth girl/right/right_sprint4.png");
+    Texture2D texJump[3];
+    texJump[0] = LoadTexture("goth girl/Jump/Jump1.png"); // launch
+    texJump[1] = LoadTexture("goth girl/Jump/Jump2.png"); // apex
+    texJump[2] = LoadTexture("goth girl/Jump/Jump3.png"); // falling
     Texture2D texDJump = LoadTexture("img/char_Djump.png");
 
     // --- NEW: Animation Variables ---
     float sprintAnimTimer = 0.0f;
-    int currentSprintFrame = 1;
+    int currentSprintFrame = 0;
 
     // initialing the scrolling camera for the 1st frame
     Camera2D camera = {0};
@@ -179,16 +185,16 @@ int main(void)
                 if (IsKeyDown(KEY_A) || IsKeyDown(KEY_D))
                 {
                     sprintAnimTimer += dt;
-                    if (sprintAnimTimer >= 0.15f)
-                    { // Swap frame every 0.15 seconds
-                        currentSprintFrame = (currentSprintFrame == 1) ? 2 : 1;
+                    if (sprintAnimTimer >= 0.1f)
+                    { // Swap frame every 0.1 seconds (10fps run cycle)
+                        currentSprintFrame = (currentSprintFrame + 1) % 4;
                         sprintAnimTimer = 0.0f;
                     }
                 }
                 else
                 {
                     sprintAnimTimer = 0.0f;
-                    currentSprintFrame = 1;
+                    currentSprintFrame = 0;
                 }
 
                 UpdateSpikeKnockback(&P, dt);
@@ -299,14 +305,21 @@ int main(void)
                     }
                     else
                     {
-                        currentTex = texJump;
+                        // Pick jump frame from actual vertical velocity, not a timer,
+                        // since jump duration varies with how high the player jumps.
+                        if (P.velocityY < -800.0f)
+                            currentTex = texJump[0]; // launch: still rising steeply
+                        else if (P.velocityY > 800.0f)
+                            currentTex = texJump[2]; // falling: descending fast
+                        else
+                            currentTex = texJump[1]; // apex: near the top of the arc
                     }
                 }
                 else
                 {
                     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_D))
                     {
-                        currentTex = (currentSprintFrame == 1) ? texSprint1 : texSprint2;
+                        currentTex = texSprint[currentSprintFrame];
                     }
                     else
                     {
@@ -324,8 +337,15 @@ int main(void)
                     sourceWidth = -sourceWidth; // Flip left
                 }
                 Rectangle sourceRec = {0.0f, 0.0f, sourceWidth, (float)currentTex.height};
-                // Forcing it to fit the 100x200 dimensions you originally used for the hitbox
-                Rectangle destRec = {P.x-50, P.y-80, 180.0f, 300.0f};
+
+                // Draw sprite larger than the 100x200 hitbox, anchored:
+                // horizontally centered, vertically bottom-aligned (feet on the hitbox floor)
+                float spriteDrawWidth = 250.0f;
+                float spriteDrawHeight = 300.0f;
+                float offsetX = (spriteDrawWidth - 100.0f) / 2.0f;
+                float offsetY = spriteDrawHeight - 200.0f;
+                Rectangle destRec = {P.x - offsetX, P.y - offsetY, spriteDrawWidth, spriteDrawHeight};
+                DrawRectangle(P.x,P.y,100,200,RED);
 
                 // Determine blinking tint for iframes
                 Color playerTint = WHITE;
@@ -471,13 +491,12 @@ int main(void)
         }
         // --- NEW: Unload textures before closing ---
 
-        // CloseWindow();
-        // return 0;
     }
     UnloadTexture(texIdle);
-    UnloadTexture(texSprint1);
-    UnloadTexture(texSprint2);
-    UnloadTexture(texJump);
+    for (int i = 0; i < 4; i++)
+        UnloadTexture(texSprint[i]);
+    for (int i = 0; i < 3; i++)
+        UnloadTexture(texJump[i]);
     UnloadTexture(texDJump);
     UnloadTexture(spiritChase);
     CloseWindow();
