@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        false,    // alive
+        false,   // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -131,14 +131,21 @@ int main(void)
     texSprint[2] = LoadTexture("goth girl/right/right_sprint3.png");
     texSprint[3] = LoadTexture("goth girl/right/right_sprint4.png");
     Texture2D texJump[3];
-    texJump[0] = LoadTexture("goth girl/Jump/Jump1.png"); // launch
-    texJump[1] = LoadTexture("goth girl/Jump/Jump2.png"); // apex
-    texJump[2] = LoadTexture("goth girl/Jump/Jump3.png"); // falling
+    texJump[0] = LoadTexture("goth girl/Jump/Jump1.png");                   // launch
+    texJump[1] = LoadTexture("goth girl/Jump/Jump2.png");                   // apex
+    texJump[2] = LoadTexture("goth girl/Jump/Jump3.png");                   // falling
     Texture2D texDJumpBurst = LoadTexture("goth girl/Jump/DJumpBurst.png"); // one-shot flash
     Texture2D texDJumpParticles[3];
     texDJumpParticles[0] = LoadTexture("goth girl/Jump/DjumParticle1.png"); // burst begins
     texDJumpParticles[1] = LoadTexture("goth girl/Jump/DjumParticle2.png"); // peak
     texDJumpParticles[2] = LoadTexture("goth girl/Jump/DjumParticle3.png"); // fade out
+    Texture2D texAttack[3];
+    texAttack[0] = LoadTexture("goth girl/attack/attackframe1.png");
+    texAttack[1] = LoadTexture("goth girl/attack/attackframe2.png");
+    texAttack[2] = LoadTexture("goth girl/attack/attackframe3.png");
+    Texture2D texAttackRect[2];
+    texAttackRect[0] = LoadTexture("goth girl/attack/attackrect1.png");
+    texAttackRect[1] = LoadTexture("goth girl/attack/attackrect2.png");
 
     // --- NEW: Animation Variables ---
     float sprintAnimTimer = 0.0f;
@@ -147,8 +154,13 @@ int main(void)
     const float DOUBLE_JUMP_FLASH_DURATION = 0.15f; // how long the burst frame shows
     float doubleJumpParticleTimer = 0.0f;
     const float DOUBLE_JUMP_PARTICLE_DURATION = 0.3f; // total particle effect duration (all 3 frames)
-    float doubleJumpParticleX = 0.0f; // position where the double jump was triggered (fixed in world space)
+    float doubleJumpParticleX = 0.0f;                 // position where the double jump was triggered (fixed in world space)
     float doubleJumpParticleY = 0.0f;
+    float attackAnimTimer = 0.0f;
+    int currentAttackFrame = 0;
+    bool isAttacking = false;
+    const float ATTACK_FRAME_DURATION = 0.08f;
+    int attackDirection = 1; // facing direction locked in at the moment the attack starts; used for AttackRect sprite flip only
 
     // initialing the scrolling camera for the 1st frame
     Camera2D camera = {0};
@@ -302,19 +314,14 @@ int main(void)
                 BeginMode2D(camera);
                 // --- NEW: Determine which texture to draw ---
                 Texture2D currentTex = texIdle;
-                // if (P.iframes > 0 && (int)(P.iframes * 10) % 2 == 0)
-                //     DrawRectangle(P.x, P.y, 100, 200, RED); // blinking during the invincibility frames
-                // else
-                //     DrawRectangle(P.x, P.y, 100, 200, WHITE);
-
                 if (en.alive == true)
                 {
                     Rectangle src = {0, 0, spiritChase.width, spiritChase.height}; // reads the entire image, region of the image
                     Rectangle dest = {en.x - 20, en.y - 20, 100, 100};             // hitbox size, where to draw on screen(destination)
-                    Vector2 origin = {0, 0};                                      // pivot point of rotation
+                    Vector2 spiritOrigin = {0, 0};                                 // pivot point of rotation
                     if (en.x > P.x)
                         src.width = -src.width; // for mirroring/flipping
-                    DrawTexturePro(spiritChase, src, dest, origin, 0.0f, WHITE);
+                    DrawTexturePro(spiritChase, src, dest, spiritOrigin, 0.0f, WHITE);
                 }
 
                 if (AttackCheck)
@@ -351,6 +358,28 @@ int main(void)
                     {
                         currentTex = texIdle;
                     }
+                }
+                if (AttackCheck)
+                {
+                    isAttacking = true;
+                    currentAttackFrame = 0;
+                    attackAnimTimer = 0.0f;
+                    attackDirection = P.dashflag; // lock in facing direction for the whole swing, set only on the trigger frame
+                }
+                if (isAttacking)
+                {
+                    attackAnimTimer += dt;
+                    if (attackAnimTimer >= ATTACK_FRAME_DURATION)
+                    {
+                        attackAnimTimer = 0.0f;
+                        currentAttackFrame++;
+                        if (currentAttackFrame >= 3)
+                        {
+                            currentAttackFrame = 2;
+                            isAttacking = false;
+                        }
+                    }
+                    currentTex = texAttack[currentAttackFrame];
                 }
 
                 // --- NEW: Setup rectangles for drawing and flipping ---
@@ -415,7 +444,25 @@ int main(void)
                 if (en.alive == true)
                     DrawRectangle(en.x, en.y, 80, 80, RED);
                 if (AttackCheck)
-                    DrawRectangleRec(AttackRect, RED);
+                {
+                    // DrawRectangleRec(AttackRect, RED); actual attack
+                    float rectSrcWidth = (float)texAttackRect[0].width;
+                    if (attackDirection == -1)
+                        rectSrcWidth = -rectSrcWidth;
+                    Rectangle src = {0, 0, rectSrcWidth, texAttackRect[0].height};
+                    Rectangle dest = {AttackRect.x, AttackRect.y, AttackRect.width, AttackRect.height};
+                    DrawTexturePro(texAttackRect[0], src, dest, (Vector2){0, 0}, 0.0f, WHITE);
+                }
+                if (isAttacking && AttackCheck == 0)
+                {
+                    int rectFrame = (currentAttackFrame < 2) ? 0 : 1;
+                    float rectSrcWidth = (float)texAttackRect[rectFrame].width;
+                    if (attackDirection == -1)
+                        rectSrcWidth = -rectSrcWidth; // flip horizontally, locked to the direction the attack started in
+                    Rectangle src = {0, 0, rectSrcWidth, texAttackRect[rectFrame].height};
+                    Rectangle dest = {AttackRect.x, AttackRect.y, AttackRect.width, AttackRect.height};
+                    DrawTexturePro(texAttackRect[rectFrame], src, dest, (Vector2){0, 0}, 0.0f, WHITE);
+                }
                 for (int i = 0; i < MAP_ROWS; i++)
                 {
                     for (int j = 0; j < MAP_COLS; j++)
@@ -540,7 +587,6 @@ int main(void)
             }
         }
         // --- NEW: Unload textures before closing ---
-
     }
     UnloadTexture(texIdle);
     for (int i = 0; i < 4; i++)
@@ -551,6 +597,10 @@ int main(void)
     for (int i = 0; i < 3; i++)
         UnloadTexture(texDJumpParticles[i]);
     UnloadTexture(spiritChase);
+    for (int i = 0; i < 3; i++)
+        UnloadTexture(texAttack[i]);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texAttackRect[i]);
     CloseWindow();
     return 0;
 }
