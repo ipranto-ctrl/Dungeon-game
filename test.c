@@ -37,7 +37,7 @@ int main(void)
         0.0f,      // velocityY
         15,        // damage
         0.0f,      // attackcooldown
-        100900.0f, // health
+        100.0f, // health
         100.0f,    // maxhealth
         .5f,       // iframes
         true,      // onground

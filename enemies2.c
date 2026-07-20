@@ -91,7 +91,7 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
         {
             if (P->iframes <= 0)
             {
-                P->health -= M->damage;
+                P->health -= 10;
                 P->iframes = invincibility;
             }
             M->mstate = MIdle;
