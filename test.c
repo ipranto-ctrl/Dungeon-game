@@ -368,7 +368,7 @@ int main(void)
                             frames = 1;
                             currentFrame = 0;
                             scaleSize = 300.0f; // Scale up for tension,, burst boro choto hoy
-                            offsetX = -125.0f; // (50/2) - (120/2)
+                            offsetX = -125.0f; // (50/2) - (300/2)
                             offsetY = -125.0f;
                         }
                     }
@@ -579,8 +579,9 @@ int main(void)
                         DrawRectangle(bulls[i].x, bulls[i].y, 200, 200, BLUE);
                 }
 
-                if (en.alive == true)
-                    DrawRectangle(en.x, en.y, 80, 80, RED);
+                // if (en.alive == true)
+                //     DrawRectangle(en.x, en.y, 80, 80, RED);
+
                 if (AttackCheck)
                 {
                     // DrawRectangleRec(AttackRect, RED); actual attack
@@ -788,7 +789,7 @@ int main(void)
     UnloadTexture(spiritStartBurst);
     UnloadTexture(spiritBurst);
     UnloadTexture(spiritAfterBurst);
-    
+
     CloseWindow();
     return 0;
 }
