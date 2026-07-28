@@ -118,10 +118,10 @@ int main(void)
 
     //Spirit Texture Load
     Texture2D spiritChase = LoadTexture("Sprite/Spirit_Chase100x100.png");
-    Texture2D spiritCharge= LoadTexture("Sprite/300x100_Charge_Up.png");
+    Texture2D spiritCharge= LoadTexture("Sprite/300x100_ChargeUp.png");
     Texture2D spiritStartBurst= LoadTexture("Sprite/100x100_Start2Burst.png");
     Texture2D spiritBurst= LoadTexture("Sprite/100x100_Burst.png");
-    Texture2D spiritAfterBurst= LoadTexture("Sprite/300x100_After_Burst.png");
+    Texture2D spiritAfterBurst= LoadTexture("Sprite/300x100_AfterBurst.png");
 
     SetExitKey(KEY_DELETE);
     HideCursor();
@@ -341,74 +341,6 @@ int main(void)
                 // --- NEW: Determine which texture to draw ---
                 Texture2D currentTex = texIdle;
 
-                //Spirit Sprites
-                if (en.alive == true)
-                {
-                    Texture2D currentSpiritTex= spiritChase;
-                    int frames=1;
-                    int currentFrame= 0;
-                    float scaleSize= 100.0f; //Baseline Dimension Scaling
-                    float offsetX= -25.0f; //(hitbox 50/2) - (scaleSize 100/2)
-                    float offsetY= -25.0f;
-
-                    if (en.spiritcollision == true && en.knockbackduration <= 0)
-                    {
-                        // Phase 2: Charging up (en.cooldown ticks down from 0.5 to 0)
-                        if (en.cooldown > 0.1f)
-                        {
-                            currentSpiritTex = spiritCharge;
-                            frames = 3;
-                            float timeElapsed = 0.5f - en.cooldown; // Ranges from 0.0 to 0.4
-                            currentFrame = (int)(timeElapsed / (0.4f / 3.0f));
-                            if (currentFrame > 2) currentFrame = 2;
-                        }
-                        else
-                        {
-                            currentSpiritTex = spiritStartBurst;
-                            frames = 1;
-                            currentFrame = 0;
-                            scaleSize = 300.0f; // Scale up for tension,, burst boro choto hoy
-                            offsetX = -125.0f; // (50/2) - (300/2)
-                            offsetY = -125.0f;
-                        }
-                    }
-                    else if (en.knockbackduration > 0)
-                    {
-                        // Phase 3: Burst and Recoil (en.knockbackduration ticks from 0.3 down to 0)
-                        if (en.knockbackduration > 0.2f)
-                        {
-                            currentSpiritTex = spiritBurst;
-                            frames = 1;
-                            currentFrame = 0;
-                            scaleSize = 400.0f; // Explosion expands past hitbox edges
-                            offsetX = -175.0f; // (50/2) - (400/2)
-                            offsetY = -175.0f;
-                        }
-                        else
-                        {
-                            currentSpiritTex = spiritAfterBurst;
-                            frames = 3;
-                            float timeElapsed = 0.2f - en.knockbackduration; // Ranges from 0.0 to 0.2
-                            currentFrame = (int)(timeElapsed / (0.2f / 3.0f));
-                            if (currentFrame > 2) currentFrame = 2;
-                            scaleSize = 400.0f; 
-                            offsetX = -175.0f;
-                            offsetY = -175.0f;
-                        }
-                    }
-
-                    float frameWidth = (float)currentSpiritTex.width / frames;
-                    Rectangle src = {currentFrame * frameWidth, 0, frameWidth, (float)currentSpiritTex.height};
-                    
-                    // Flip texture based on direction if it's currently chasing
-                    if (!en.spiritcollision && en.x > P.x)
-                        src.width = -src.width; 
-
-                    Rectangle dest = {en.x + offsetX, en.y + offsetY, scaleSize, scaleSize};
-                    Vector2 spiritOrigin = {0, 0};
-                    DrawTexturePro(currentSpiritTex, src, dest, spiritOrigin, 0.0f, WHITE);
-                }
-
                 if (AttackCheck)
                     DrawRectangleRec(AttackRect, RED);
 
@@ -515,6 +447,74 @@ int main(void)
 
                 // Draw the selected texture
                 DrawTexturePro(currentTex, sourceRec, destRec, origin, 0.0f, playerTint);
+
+                //Spirit Sprites (drawn after the player so it renders on top)
+                if (en.alive == true)
+                {
+                    Texture2D currentSpiritTex= spiritChase;
+                    int frames=1;
+                    int currentFrame= 0;
+                    float scaleSize= 100.0f; //Baseline Dimension Scaling
+                    float spiritOffsetX= -25.0f; //(hitbox 50/2) - (scaleSize 100/2)
+                    float spiritOffsetY= -25.0f;
+
+                    if (en.spiritcollision == true && en.knockbackduration <= 0)
+                    {
+                        // Phase 2: Charging up (en.cooldown ticks down from 0.5 to 0)
+                        if (en.cooldown > 0.1f)
+                        {
+                            currentSpiritTex = spiritCharge;
+                            frames = 3;
+                            float timeElapsed = 0.5f - en.cooldown; // Ranges from 0.0 to 0.4
+                            currentFrame = (int)(timeElapsed / (0.4f / 3.0f));
+                            if (currentFrame > 2) currentFrame = 2;
+                        }
+                        else
+                        {
+                            currentSpiritTex = spiritStartBurst;
+                            frames = 1;
+                            currentFrame = 0;
+                            scaleSize = 300.0f; // Scale up for tension,, burst boro choto hoy
+                            spiritOffsetX = -125.0f; // (50/2) - (300/2)
+                            spiritOffsetY = -125.0f;
+                        }
+                    }
+                    else if (en.knockbackduration > 0)
+                    {
+                        // Phase 3: Burst and Recoil (en.knockbackduration ticks from 0.3 down to 0)
+                        if (en.knockbackduration > 0.2f)
+                        {
+                            currentSpiritTex = spiritBurst;
+                            frames = 1;
+                            currentFrame = 0;
+                            scaleSize = 400.0f; // Explosion expands past hitbox edges
+                            spiritOffsetX = -175.0f; // (50/2) - (400/2)
+                            spiritOffsetY = -175.0f;
+                        }
+                        else
+                        {
+                            currentSpiritTex = spiritAfterBurst;
+                            frames = 3;
+                            float timeElapsed = 0.2f - en.knockbackduration; // Ranges from 0.0 to 0.2
+                            currentFrame = (int)(timeElapsed / (0.2f / 3.0f));
+                            if (currentFrame > 2) currentFrame = 2;
+                            scaleSize = 400.0f;
+                            spiritOffsetX = -175.0f;
+                            spiritOffsetY = -175.0f;
+                        }
+                    }
+
+                    float frameWidth = (float)currentSpiritTex.width / frames;
+                    Rectangle src = {currentFrame * frameWidth, 0, frameWidth, (float)currentSpiritTex.height};
+
+                    // Flip texture based on direction if it's currently chasing
+                    if (!en.spiritcollision && en.x > P.x)
+                        src.width = -src.width;
+
+                    Rectangle dest = {en.x + spiritOffsetX, en.y + spiritOffsetY, scaleSize, scaleSize};
+                    Vector2 spiritOrigin = {0, 0};
+                    DrawTexturePro(currentSpiritTex, src, dest, spiritOrigin, 0.0f, WHITE);
+                }
 
                 // Draw the double-jump particle burst at the fixed trigger position, if active
                 if (doubleJumpParticleTimer > 0.0f)
