@@ -173,7 +173,12 @@ int main(void)
     float doubleJumpParticleY = 0.0f;
     int currentAttackFrame = 0;
     bool isAttacking = false;
-    float attackCooldownAtTrigger = 0.0f; // cooldown value captured the instant this swing started; drives animation progress so the sprite can never outlast or finish before the real attack cooldown
+    float attackCooldownAtTrigger = 0.0f; // cooldown value captured the instant this swing started; kept so we know when the real hitbox/cooldown window has ended
+    // NEW: attack animation now runs off its own short timer instead of the (often much longer)
+    // attackcooldown value, so the swing sprite reads fast/punchy regardless of how long the
+    // cooldown before the next attack actually is.
+    float attackAnimTimer = 0.0f;
+    const float ATTACK_ANIM_DURATION = .1f; // total time to play through all 3 attack frames; lower = snappier
     int attackDirection = 1;      // facing direction locked in at the moment the attack starts; used for AttackRect sprite flip only
     bool attackIsUpAttack = false; // whether the current swing is the up-attack, locked in at the moment the attack starts
     int currentDashFrame = 0;
@@ -341,8 +346,8 @@ int main(void)
                 // --- NEW: Determine which texture to draw ---
                 Texture2D currentTex = texIdle;
 
-                if (AttackCheck)
-                    DrawRectangleRec(AttackRect, RED);
+                // if (AttackCheck)
+                //     DrawRectangleRec(AttackRect, RED);  true attackhitbox
 
                 if (P.dashing)
                 {
@@ -396,17 +401,25 @@ int main(void)
                 {
                     isAttacking = true;
                     attackCooldownAtTrigger = P.attackcooldown; // cooldown UpdateAttack just set for this swing (e.g. 0.25)
+                    attackAnimTimer = 0.0f;                      // NEW: restart the animation clock for this swing
                     attackDirection = P.dashflag;                // lock in facing direction for the whole swing, set only on the trigger frame
                     attackIsUpAttack = IsKeyDown(KEY_W);         // same condition UpdateAttack used internally to build the up-attack AttackRect
                 }
                 if (isAttacking)
                 {
-                    // Derive animation progress directly from how much of the real
-                    // attack cooldown has elapsed, so the sprite can never finish
-                    // before or outlast the actual cooldown used by the hitbox logic.
-                    float progress = (attackCooldownAtTrigger > 0.0f)
-                        ? (1.0f - (P.attackcooldown / attackCooldownAtTrigger))
+                    // NEW: Derive animation progress from its own short fixed-length timer
+                    // (ATTACK_ANIM_DURATION) instead of the real attack cooldown, so the swing
+                    // sprite always plays at the same snappy speed no matter how long the
+                    // cooldown/hitbox window happens to be. The sprite plays through once and
+                    // then holds its last frame until the real cooldown (and thus isAttacking)
+                    // ends, so hit-detection timing is completely unaffected.
+                    attackAnimTimer += dt;
+                    float progress = (ATTACK_ANIM_DURATION > 0.0f)
+                        ? (attackAnimTimer / ATTACK_ANIM_DURATION)
                         : 1.0f;
+                    if (progress > 1.0f)
+                        progress = 1.0f;
+
                     currentAttackFrame = (int)(progress * 3.0f);
                     if (currentAttackFrame > 2)
                         currentAttackFrame = 2;
