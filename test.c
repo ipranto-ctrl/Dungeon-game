@@ -27,25 +27,25 @@ int main(void)
     } Gamestate;
     Gamestate state = Mainmenu;
     Player P = {
-        200.0f,    // x
-        1200.0f,   // speed
-        0.2f,      // dashtimer
-        1,         // dashflag
-        0.0f,      // dashcooldown
-        824.0f,    // y
-        10000.0f,  // gravity
-        0.0f,      // velocityY
-        15,        // damage
-        0.0f,      // attackcooldown
-        100.0f, // health
-        100.0f,    // maxhealth
-        .5f,       // iframes
-        true,      // onground
-        true,      // doublejump
-        false,     // dashing
-        true,      // alive
-        0.0f,      // spikeknkbacktimer
-        0          // spikeknkdirection
+        200.0f,       // x
+        1200.0f,      // speed
+        0.2f,         // dashtimer
+        1,            // dashflag
+        0.0f,         // dashcooldown
+        824.0f,       // y
+        10000.0f,     // gravity
+        0.0f,         // velocityY
+        15,           // damage
+        0.0f,         // attackcooldown
+        100000000.0f, // health
+        100.0f,       // maxhealth
+        .5f,          // iframes
+        true,         // onground
+        true,         // doublejump
+        false,        // dashing
+        true,         // alive
+        0.0f,         // spikeknkbacktimer
+        0             // spikeknkdirection
     };
     Spirit en = {
         200.0f, // x
@@ -87,7 +87,7 @@ int main(void)
 
     int mimicCount = 0;
     int mimicattaks[mimicCount];
-    int bullCount = 0; ////edited 0 for testing
+    int bullCount = 3; ////edited 0 for testing
 
     Dragon dragon = {
         1500.0f, // x
@@ -116,12 +116,12 @@ int main(void)
 
     InitWindow(1440, 1080, "Title:The Name");
 
-    //Spirit Texture Load
+    // Spirit Texture Load
     Texture2D spiritChase = LoadTexture("Sprite/Spirit_Chase100x100.png");
-    Texture2D spiritCharge= LoadTexture("Sprite/300x100_ChargeUp.png");
-    Texture2D spiritStartBurst= LoadTexture("Sprite/100x100_Start2Burst.png");
-    Texture2D spiritBurst= LoadTexture("Sprite/100x100_Burst.png");
-    Texture2D spiritAfterBurst= LoadTexture("Sprite/300x100_AfterBurst.png");
+    Texture2D spiritCharge = LoadTexture("Sprite/300x100_ChargeUp.png");
+    Texture2D spiritStartBurst = LoadTexture("Sprite/100x100_Start2Burst.png");
+    Texture2D spiritBurst = LoadTexture("Sprite/100x100_Burst.png");
+    Texture2D spiritAfterBurst = LoadTexture("Sprite/300x100_AfterBurst.png");
 
     SetExitKey(KEY_DELETE);
     HideCursor();
@@ -162,6 +162,24 @@ int main(void)
     texDash[1] = LoadTexture("goth girl/right/dash2.png"); // tucked burst, mid-dash
     texDash[2] = LoadTexture("goth girl/right/dash3.png"); // full speed streak
 
+    // --- Load Bull Textures ---
+    Texture2D texBullIdle = LoadTexture("img/bullidle.png");
+
+    Texture2D texBullRun[4];
+    texBullRun[0] = LoadTexture("img/bullrun1.png");
+    texBullRun[1] = LoadTexture("img/bullrun2.png");
+    texBullRun[2] = LoadTexture("img/bullrun3.png");
+    texBullRun[3] = LoadTexture("img/bullrun4.png");
+
+    Texture2D texBullStop[2];
+    texBullStop[0] = LoadTexture("img/bullstop1.png");
+    texBullStop[1] = LoadTexture("img/bullstop2.png");
+
+    // Bull Animation Variables
+    float bullAnimTimer = 0.0f;
+    int currentBullRunFrame = 0;
+    int currentBullStopFrame = 0;
+
     // --- NEW: Animation Variables ---
     float sprintAnimTimer = 0.0f;
     int currentSprintFrame = 0;
@@ -183,7 +201,7 @@ int main(void)
     bool attackIsUpAttack = false; // whether the current swing is the up-attack, locked in at the moment the attack starts
     int currentDashFrame = 0;
     float dashDurationAtTrigger = 0.0f; // P.dashtimer value captured the instant the dash starts; drives animation progress the same way attackCooldownAtTrigger does
-    float dashParticleX = 0.0f; // world-space launch point captured at dash start, so the burst stays put while the player rockets away from it
+    float dashParticleX = 0.0f;         // world-space launch point captured at dash start, so the burst stays put while the player rockets away from it
     float dashParticleY = 0.0f;
 
     // initialing the scrolling camera for the 1st frame
@@ -241,6 +259,15 @@ int main(void)
                 {
                     sprintAnimTimer = 0.0f;
                     currentSprintFrame = 0;
+                }
+
+                // --- Update Bull Animation Timers ---
+                bullAnimTimer += dt;
+                if (bullAnimTimer >= 0.1f) // Switches frame every 0.1 seconds (~10 FPS animation)
+                {
+                    currentBullRunFrame = (currentBullRunFrame + 1) % 4;
+                    currentBullStopFrame = (currentBullStopFrame + 1) % 2;
+                    bullAnimTimer = 0.0f;
                 }
 
                 UpdateSpikeKnockback(&P, dt);
@@ -355,8 +382,8 @@ int main(void)
                     // derive the frame from how much of the actual dash duration has
                     // elapsed so the sprite can't finish before or outlast the dash itself.
                     float dashProgress = (dashDurationAtTrigger > 0.0f)
-                        ? (1.0f - (P.dashtimer / dashDurationAtTrigger))
-                        : 1.0f;
+                                             ? (1.0f - (P.dashtimer / dashDurationAtTrigger))
+                                             : 1.0f;
                     currentDashFrame = (int)(dashProgress * 3.0f);
                     if (currentDashFrame > 2)
                         currentDashFrame = 2;
@@ -461,15 +488,15 @@ int main(void)
                 // Draw the selected texture
                 DrawTexturePro(currentTex, sourceRec, destRec, origin, 0.0f, playerTint);
 
-                //Spirit Sprites (drawn after the player so it renders on top)
+                // Spirit Sprites (drawn after the player so it renders on top)
                 if (en.alive == true)
                 {
-                    Texture2D currentSpiritTex= spiritChase;
-                    int frames=1;
-                    int currentFrame= 0;
-                    float scaleSize= 100.0f; //Baseline Dimension Scaling
-                    float spiritOffsetX= -25.0f; //(hitbox 50/2) - (scaleSize 100/2)
-                    float spiritOffsetY= -25.0f;
+                    Texture2D currentSpiritTex = spiritChase;
+                    int frames = 1;
+                    int currentFrame = 0;
+                    float scaleSize = 100.0f;     // Baseline Dimension Scaling
+                    float spiritOffsetX = -25.0f; //(hitbox 50/2) - (scaleSize 100/2)
+                    float spiritOffsetY = -25.0f;
 
                     if (en.spiritcollision == true && en.knockbackduration <= 0)
                     {
@@ -480,14 +507,15 @@ int main(void)
                             frames = 3;
                             float timeElapsed = 0.5f - en.cooldown; // Ranges from 0.0 to 0.4
                             currentFrame = (int)(timeElapsed / (0.4f / 3.0f));
-                            if (currentFrame > 2) currentFrame = 2;
+                            if (currentFrame > 2)
+                                currentFrame = 2;
                         }
                         else
                         {
                             currentSpiritTex = spiritStartBurst;
                             frames = 1;
                             currentFrame = 0;
-                            scaleSize = 300.0f; // Scale up for tension,, burst boro choto hoy
+                            scaleSize = 300.0f;      // Scale up for tension,, burst boro choto hoy
                             spiritOffsetX = -125.0f; // (50/2) - (300/2)
                             spiritOffsetY = -125.0f;
                         }
@@ -500,7 +528,7 @@ int main(void)
                             currentSpiritTex = spiritBurst;
                             frames = 1;
                             currentFrame = 0;
-                            scaleSize = 400.0f; // Explosion expands past hitbox edges
+                            scaleSize = 400.0f;      // Explosion expands past hitbox edges
                             spiritOffsetX = -175.0f; // (50/2) - (400/2)
                             spiritOffsetY = -175.0f;
                         }
@@ -510,7 +538,8 @@ int main(void)
                             frames = 3;
                             float timeElapsed = 0.2f - en.knockbackduration; // Ranges from 0.0 to 0.2
                             currentFrame = (int)(timeElapsed / (0.2f / 3.0f));
-                            if (currentFrame > 2) currentFrame = 2;
+                            if (currentFrame > 2)
+                                currentFrame = 2;
                             scaleSize = 400.0f;
                             spiritOffsetX = -175.0f;
                             spiritOffsetY = -175.0f;
@@ -562,8 +591,8 @@ int main(void)
                 if (P.dashing)
                 {
                     float dashParticleProgress = (dashDurationAtTrigger > 0.0f)
-                        ? (1.0f - (P.dashtimer / dashDurationAtTrigger))
-                        : 1.0f;
+                                                     ? (1.0f - (P.dashtimer / dashDurationAtTrigger))
+                                                     : 1.0f;
                     int dashParticleFrame = (int)(dashParticleProgress * 3.0f);
                     if (dashParticleFrame > 2)
                         dashParticleFrame = 2;
@@ -586,10 +615,104 @@ int main(void)
                     DrawTexturePro(dashParticleTex, dashParticleSource, dashParticleDest, dashParticleOrigin, -90.0f, WHITE);
                 }
 
+                // for (int i = 0; i < bullCount; i++)
+                // {
+                //     if (bulls[i].alive == true)
+                //         DrawRectangle(bulls[i].x, bulls[i].y, 200, 200, BLUE);
+                // }
+
+//                 // --- Draw Bull Enemies ---
+// for (int i = 0; i < bullCount; i++)
+// {
+//     if (bulls[i].alive)
+//     {
+//         Texture2D bullTex = texBullIdle;
+
+//         // Map Bull's current state to the correct sprite
+//         // (Assuming your Bull state enum uses names like Charging, Decelerating, Idle)
+//         if (bulls[i].state == Charging)
+//         {
+//             bullTex = texBullRun[currentBullRunFrame];
+//         }
+//         else if (bulls[i].state == Stopping) // Or whatever your stopping state is named
+//         {
+//             bullTex = texBullStop[currentBullStopFrame];
+//         }
+//         else
+//         {
+//             bullTex = texBullIdle;
+//         }
+
+//         // Handle Direction & Horizontally Flip Texture
+//         // Since base textures face RIGHT, flip source width when facing LEFT (dir == -1)
+//         float sourceWidth = (float)bullTex.width;
+//         if (bulls[i].direction == -1) 
+//         {
+//             sourceWidth = -sourceWidth;
+//         }
+
+//         Rectangle sourceRec = { 0.0f, 0.0f, sourceWidth, (float)bullTex.height };
+        
+//         // Draw sprite matching the 200x200 hitbox dimensions
+//         Rectangle destRec = { bulls[i].x, bulls[i].y, 200.0f, 200.0f };
+//         Vector2 origin = { 0.0f, 0.0f };
+
+//         DrawTexturePro(bullTex, sourceRec, destRec, origin, 0.0f, WHITE);
+//     }
+// }
+// --- Draw Bull Enemies ---
                 for (int i = 0; i < bullCount; i++)
                 {
-                    if (bulls[i].alive == true)
-                        DrawRectangle(bulls[i].x, bulls[i].y, 200, 200, BLUE);
+                    if (bulls[i].alive)
+                    {
+                        Texture2D bullTex = texBullIdle;
+
+                        // Map Bull's current state to the correct sprite
+                        if (bulls[i].state == Charging)
+                        {
+                            bullTex = texBullRun[currentBullRunFrame];
+                        }
+                        else if (bulls[i].state == Stopping) 
+                        {
+                            bullTex = texBullStop[currentBullStopFrame];
+                        }
+                        else
+                        {
+                            bullTex = texBullIdle;
+                        }
+
+                        // Handle Direction & Horizontally Flip Texture
+                        float sourceWidth = (float)bullTex.width;
+                        if (bulls[i].direction == -1) 
+                        {
+                            sourceWidth = -sourceWidth;
+                        }
+
+                        Rectangle sourceRec = { 0.0f, 0.0f, sourceWidth, (float)bullTex.height };
+                        
+                        // --- UPDATED DRAWING LOGIC FOR 1.5x SCALE ---
+                        
+                        // 1.5x larger than your 200x200 hitbox
+                        float bullDrawWidth = 250.0f; 
+                        float bullDrawHeight = 250.0f;
+                        
+                        // Offset to keep the sprite centered horizontally over the 200px hitbox
+                        float offsetX = (bullDrawWidth - 200.0f) / 2.0f; 
+                        
+                        // Offset to keep the sprite's feet aligned with the bottom of the 200px hitbox
+                        float offsetY = bullDrawHeight - 200.0f; 
+
+                        Rectangle destRec = { 
+                            bulls[i].x - offsetX, 
+                            bulls[i].y - offsetY, 
+                            bullDrawWidth, 
+                            bullDrawHeight 
+                        };
+                        
+                        Vector2 origin = { 0.0f, 0.0f };
+
+                        DrawTexturePro(bullTex, sourceRec, destRec, origin, 0.0f, WHITE);
+                    }
                 }
 
                 // if (en.alive == true)
@@ -802,7 +925,12 @@ int main(void)
     UnloadTexture(spiritStartBurst);
     UnloadTexture(spiritBurst);
     UnloadTexture(spiritAfterBurst);
-
+    // --- Unload Bull Textures ---
+UnloadTexture(texBullIdle);
+for (int i = 0; i < 4; i++)
+    UnloadTexture(texBullRun[i]);
+for (int i = 0; i < 2; i++)
+    UnloadTexture(texBullStop[i]);
     CloseWindow();
     return 0;
 }
