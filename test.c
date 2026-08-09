@@ -85,9 +85,9 @@ int main(void)
     int totemCount = 0;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 0;
+    int mimicCount = 3;
     int mimicattaks[mimicCount];
-    int bullCount = 3; ////edited 0 for testing
+    int bullCount = 0; ////edited 0 for testing
 
     Dragon dragon = {
         1500.0f, // x
@@ -180,6 +180,18 @@ int main(void)
     int currentBullRunFrame = 0;
     int currentBullStopFrame = 0;
 
+    // --- Load Mimic Textures ---
+    Texture2D texMimicIdle = LoadTexture("img/mimicidle.png");
+
+    Texture2D texMimicRun[2];
+    texMimicRun[0] = LoadTexture("img/mimicrun1.png");
+    texMimicRun[1] = LoadTexture("img/mimicrun2.png");
+
+    // Mimic Animation Variables
+    float mimicAnimTimer = 0.0f;
+    int currentMimicRunFrame = 0;
+    float mimicWalkCycleTimer = 0.0f; // continuous (never resets) -- drives the bob/lean offset independent of frame-swap timing
+
     // --- NEW: Animation Variables ---
     float sprintAnimTimer = 0.0f;
     int currentSprintFrame = 0;
@@ -269,6 +281,17 @@ int main(void)
                     currentBullStopFrame = (currentBullStopFrame + 1) % 2;
                     bullAnimTimer = 0.0f;
                 }
+
+                // --- Update Mimic Animation Timer ---
+                mimicAnimTimer += dt;
+                if (mimicAnimTimer >= 0.15f) // slower than the Bull's 0.1s -- he's on crutches, not sprinting
+                {
+                    currentMimicRunFrame = (currentMimicRunFrame + 1) % 2;
+                    mimicAnimTimer = 0.0f;
+                }
+                // Separate continuous accumulator (never resets) for the bob/lean offset below,
+                // so that motion stays smooth regardless of the 2-frame swap timing above.
+                mimicWalkCycleTimer += dt;
 
                 UpdateSpikeKnockback(&P, dt);
 
@@ -787,13 +810,76 @@ int main(void)
                             DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
                     }
                 }
+                // --- Draw Mimic Enemies ---
                 for (int i = 0; i < mimicCount; i++)
                 {
                     if (mimics[i].alive)
                     {
-                        DrawRectangle(mimics[i].x, mimics[i].y, 100, 200, GREEN);
+                        Texture2D mimicTex = texMimicIdle;
+                        bool mimicIsWalking = false;
+
+                        // Map Mimic's current state to the correct sprite
+                        if (mimics[i].mstate == MChasing)
+                        {
+                            mimicTex = texMimicRun[currentMimicRunFrame];
+                            mimicIsWalking = true;
+                        }
+                        else // MIdle and MCharging both use idle for now, until charge/attack frames exist
+                        {
+                            mimicTex = texMimicIdle;
+                        }
+
+                        // Handle Direction & Horizontally Flip Texture
+                        float sourceWidth = (float)mimicTex.width;
+                        if (mimics[i].direction == -1)
+                        {
+                            sourceWidth = -sourceWidth;
+                        }
+
+                        Rectangle sourceRec = {0.0f, 0.0f, sourceWidth, (float)mimicTex.height};
+
+                        // Scale uniformly off the texture's OWN real aspect ratio instead of
+                        // assuming every frame shares the idle frame's exact 720x1456 canvas.
+                        // Generated walk frames have come back at different canvas proportions
+                        // (e.g. 1024x1536), and a fixed destWidth/destHeight stretch squashes
+                        // those non-uniformly (reads as the sprite going "slim"). Locking to a
+                        // target height and deriving width from the texture's actual dimensions
+                        // keeps every frame correctly proportioned no matter its source canvas.
+                        float mimicDrawHeight = 330.0f; // 1.5x the 200px hitbox height
+                        float mimicDrawWidth = ((float)mimicTex.width / (float)mimicTex.height) * mimicDrawHeight*1.3;
+
+                        // Bob/lean offset -- only while walking, synced to the continuous
+                        // mimicWalkCycleTimer (independent of the 2-frame swap timer) so the
+                        // sway stays smooth regardless of how many real frames exist.
+                        float mimicBobOffset = 0.0f;
+                        float mimicLeanOffset = 0.0f;
+                        if (mimicIsWalking)
+                        {
+                            float walkCycleDuration = 0.6f; // full bob/lean cycle length, tune to taste
+                            float cyclePos = fmodf(mimicWalkCycleTimer, walkCycleDuration) / walkCycleDuration;
+                            mimicBobOffset = sinf(cyclePos * 2.0f * PI * 2.0f) * 4.0f;  // 2 bobs per cycle (double-crutch gait)
+                            mimicLeanOffset = sinf(cyclePos * 2.0f * PI) * 6.0f;        // forward/back sway
+                            if (mimics[i].direction == -1)
+                                mimicLeanOffset = -mimicLeanOffset; // sway follows facing direction
+                        }
+
+                        // Center horizontally over the 100px hitbox, align feet to the bottom
+                        float mimicOffsetX = (mimicDrawWidth - 100.0f) / 2.0f;
+                        float mimicOffsetY = mimicDrawHeight - 200.0f;
+
+                        Rectangle destRec = {
+                            mimics[i].x - mimicOffsetX + mimicLeanOffset,
+                            mimics[i].y - mimicOffsetY + mimicBobOffset,
+                            mimicDrawWidth,
+                            mimicDrawHeight};
+
+                        Vector2 mimicOrigin = {0.0f, 0.0f};
+
+                        DrawRectangle(mimics[i].x,mimics[i].y,100,200,RED);
+                        DrawTexturePro(mimicTex, sourceRec, destRec, mimicOrigin, 0.0f, WHITE);
+
                         if (mimicattaks[i])
-                            DrawRectangleRec(mimics[i].attackrect, YELLOW);
+                            DrawRectangleRec(mimics[i].attackrect, YELLOW); // keep this until a dedicated attack sprite exists
                     }
                 }
                 for (int i = 0; i < archerCount; i++)
@@ -931,6 +1017,12 @@ for (int i = 0; i < 4; i++)
     UnloadTexture(texBullRun[i]);
 for (int i = 0; i < 2; i++)
     UnloadTexture(texBullStop[i]);
+
+    // --- Unload Mimic Textures ---
+    UnloadTexture(texMimicIdle);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texMimicRun[i]);
+
     CloseWindow();
     return 0;
 }

@@ -199,7 +199,7 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
         if (M->knockbackduration > 0)
         {
             P->x -= 1500 * P->dashflag * dt;
-            M->x += 1500 * P->dashflag * dt;
+            M->x += 4000 * P->dashflag * dt;
             M->knockbackduration -= dt;
         }
     }
