@@ -37,7 +37,7 @@ int main(void)
         0.0f,         // velocityY
         15,           // damage
         0.0f,         // attackcooldown
-        100000000.0f, // health
+        100.0f, // health
         100.0f,       // maxhealth
         .5f,          // iframes
         true,         // onground
@@ -912,7 +912,7 @@ int main(void)
                 DrawRectangle(20, 20, 200 * (P.health / P.maxHealth), 20, RED); // foreground — width = maxWidth * (health / maxHealth)
                 EndDrawing();
             }
-
+        }    
             if (state == Gameover)
 
             {
@@ -985,7 +985,7 @@ int main(void)
                 DrawText("Press ENTER to restart", screen_w / 2 - 150, screen_h / 2 + 60, 30, WHITE);
                 EndDrawing();
             }
-        }
+        
         // --- NEW: Unload textures before closing ---
     }
     UnloadTexture(texIdle);
