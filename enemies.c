@@ -390,8 +390,8 @@ void UpdateDragon(Dragon *D, Player *P, float dt, int attackcheck, Rectangle *at
 
         D->x += direction * currentSpeed * dt;
 
-        D->firerect.x = D->x;
-        D->firerect.y = D->y + 200;
+        D->firerect.x = D->x+40;
+        D->firerect.y = D->y + 250;
         D->firerect.width = 300;
         D->firerect.height = 1500;
 

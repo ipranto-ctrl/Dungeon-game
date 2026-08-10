@@ -152,7 +152,7 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
         if (M->attackcooldown <= 0)
         {
             attackcheckmimic = 1;
-            M->attackcooldown = 1.0;
+            M->attackcooldown = 0.5;
             if (M->direction == 1)
             {
                 M->attackrect.x = M->x + 100;

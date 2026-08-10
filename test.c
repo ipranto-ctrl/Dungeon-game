@@ -65,7 +65,7 @@ int main(void)
         {1500.0f, 1800.0f, 100.0f, 4000.0f, 3500.0f, 90.0f, 20.0f, 1, 25000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.5f},
     };
     Mimic mimics[3] = {
-        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1700.0f}, // add amx speed at the end
+        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f}, // add amx speed at the end
         {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f},
         {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f},
     };
@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        true,   // alive
+        true,    // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -122,7 +122,6 @@ int main(void)
     Texture2D spiritStartBurst = LoadTexture("Sprite/100x100_Start2Burst.png");
     Texture2D spiritBurst = LoadTexture("Sprite/100x100_Burst.png");
     Texture2D spiritAfterBurst = LoadTexture("Sprite/300x100_AfterBurst.png");
-
 
     // UFO Texture Load
     Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
@@ -194,8 +193,8 @@ int main(void)
     // Mimic Attack Textures -- charging still uses the idle texture as a placeholder
     // until a dedicated charge-frame asset exists
     Texture2D texMimicAttack[2];
-    texMimicAttack[0] = LoadTexture("img/mimicattack1.png"); // strike release
-    texMimicAttack[1] = LoadTexture("img/mimicattack2.png"); // recovery back toward idle
+    texMimicAttack[0] = LoadTexture("img/mimicattack1.png");      // strike release
+    texMimicAttack[1] = LoadTexture("img/mimicattack2.png");      // recovery back toward idle
     Texture2D texMimicCharge = LoadTexture("img/mimicharge.png"); // charging wind-up pose
 
     // Mimic attack-impact particle burst -- square canvas, replaces the YELLOW
@@ -213,7 +212,7 @@ int main(void)
     // Per-mimic attack animation timers (hardcoded to 3 to match the mimics[3] array elsewhere)
     float mimicAttackAnimTimer[3] = {0.0f, 0.0f, 0.0f};
     bool mimicAttackAnimActive[3] = {false, false, false}; // latched separately from mimicattaks[i], which may only pulse true for a single frame
-    const float MIMIC_ATTACK_ANIM_DURATION = 0.4f; // total time to play through both attack frames -- bumped up so the swing is actually visible
+    const float MIMIC_ATTACK_ANIM_DURATION = 0.4f;         // total time to play through both attack frames -- bumped up so the swing is actually visible
 
     // Per-mimic attack-impact particle burst -- fires on the falling edge of
     // mimicAttackAnimActive[i] (i.e. once the swing finishes), at wherever
@@ -221,9 +220,9 @@ int main(void)
     // frame mimicattaks[i] pulses true, so it has to be snapshotted then and reused
     // once the anim ends and the real attackrect may already be stale/zeroed.
     float mimicParticleTimer[3] = {0.0f, 0.0f, 0.0f};
-    Rectangle mimicParticleRect[3] = {0}; // snapshot of attackrect from the last valid hit-check frame
+    Rectangle mimicParticleRect[3] = {0};       // snapshot of attackrect from the last valid hit-check frame
     const float MIMIC_PARTICLE_DURATION = 0.2f; // total time to play through both particle frames
-    const float MIMIC_PARTICLE_SIZE = 260.0f; // draw size (square) -- independent of attackrect's own dimensions, tune to taste
+    const float MIMIC_PARTICLE_SIZE = 260.0f;   // draw size (square) -- independent of attackrect's own dimensions, tune to taste
 
     // Per-mimic hit-flash tracking -- detects a health drop frame-to-frame (rather than
     // depending on any knockback/iframe internals inside enemies.c) and tints the sprite
@@ -249,8 +248,8 @@ int main(void)
     // cooldown before the next attack actually is.
     float attackAnimTimer = 0.0f;
     const float ATTACK_ANIM_DURATION = .1f; // total time to play through all 3 attack frames; lower = snappier
-    int attackDirection = 1;      // facing direction locked in at the moment the attack starts; used for AttackRect sprite flip only
-    bool attackIsUpAttack = false; // whether the current swing is the up-attack, locked in at the moment the attack starts
+    int attackDirection = 1;                // facing direction locked in at the moment the attack starts; used for AttackRect sprite flip only
+    bool attackIsUpAttack = false;          // whether the current swing is the up-attack, locked in at the moment the attack starts
     int currentDashFrame = 0;
     float dashDurationAtTrigger = 0.0f; // P.dashtimer value captured the instant the dash starts; drives animation progress the same way attackCooldownAtTrigger does
     float dashParticleX = 0.0f;         // world-space launch point captured at dash start, so the burst stays put while the player rockets away from it
@@ -545,9 +544,9 @@ int main(void)
                 {
                     isAttacking = true;
                     attackCooldownAtTrigger = P.attackcooldown; // cooldown UpdateAttack just set for this swing (e.g. 0.25)
-                    attackAnimTimer = 0.0f;                      // NEW: restart the animation clock for this swing
-                    attackDirection = P.dashflag;                // lock in facing direction for the whole swing, set only on the trigger frame
-                    attackIsUpAttack = IsKeyDown(KEY_W);         // same condition UpdateAttack used internally to build the up-attack AttackRect
+                    attackAnimTimer = 0.0f;                     // NEW: restart the animation clock for this swing
+                    attackDirection = P.dashflag;               // lock in facing direction for the whole swing, set only on the trigger frame
+                    attackIsUpAttack = IsKeyDown(KEY_W);        // same condition UpdateAttack used internally to build the up-attack AttackRect
                 }
                 if (isAttacking)
                 {
@@ -559,8 +558,8 @@ int main(void)
                     // ends, so hit-detection timing is completely unaffected.
                     attackAnimTimer += dt;
                     float progress = (ATTACK_ANIM_DURATION > 0.0f)
-                        ? (attackAnimTimer / ATTACK_ANIM_DURATION)
-                        : 1.0f;
+                                         ? (attackAnimTimer / ATTACK_ANIM_DURATION)
+                                         : 1.0f;
                     if (progress > 1.0f)
                         progress = 1.0f;
 
@@ -737,12 +736,11 @@ int main(void)
                     {
                         Texture2D bullTex = texBullIdle;
 
-                        // Map Bull's current state to the correct sprite
                         if (bulls[i].state == Charging)
                         {
                             bullTex = texBullRun[currentBullRunFrame];
                         }
-                        else if (bulls[i].state == Stopping) 
+                        else if (bulls[i].state == Stopping)
                         {
                             bullTex = texBullStop[currentBullStopFrame];
                         }
@@ -751,35 +749,33 @@ int main(void)
                             bullTex = texBullIdle;
                         }
 
-                        // Handle Direction & Horizontally Flip Texture
                         float sourceWidth = (float)bullTex.width;
-                        if (bulls[i].direction == -1) 
+                        if (bulls[i].direction == -1)
                         {
                             sourceWidth = -sourceWidth;
                         }
 
-                        Rectangle sourceRec = { 0.0f, 0.0f, sourceWidth, (float)bullTex.height };
-                        
-                        // --- UPDATED DRAWING LOGIC FOR 1.5x SCALE ---
-                        
-                        // 1.5x larger than your 200x200 hitbox
-                        float bullDrawWidth = 250.0f; 
-                        float bullDrawHeight = 250.0f;
-                        
-                        // Offset to keep the sprite centered horizontally over the 200px hitbox
-                        float offsetX = (bullDrawWidth - 200.0f) / 2.0f; 
-                        
-                        // Offset to keep the sprite's feet aligned with the bottom of the 200px hitbox
-                        float offsetY = bullDrawHeight - 200.0f; 
+                        Rectangle sourceRec = {0.0f, 0.0f, sourceWidth, (float)bullTex.height};
 
-                        Rectangle destRec = { 
-                            bulls[i].x - offsetX, 
-                            bulls[i].y - offsetY, 
-                            bullDrawWidth, 
-                            bullDrawHeight 
-                        };
-                        
-                        Vector2 origin = { 0.0f, 0.0f };
+                        // Preserve each texture's own aspect ratio instead of forcing a fixed
+                        // 250x250 square -- stop frames aren't the same proportions as idle/run,
+                        // so a hardcoded square squishes/"slims" them.
+                        float bullAspect = (float)bullTex.width / (float)bullTex.height;
+                        float maxBullHeight = 250.0f; // tune to taste
+                        float bullDrawHeight = maxBullHeight;
+                        float bullDrawWidth = bullAspect * maxBullHeight;
+
+                        // Center horizontally over the 200px hitbox, feet aligned to the bottom
+                        float offsetX = (bullDrawWidth - 200.0f) / 2.0f;
+                        float offsetY = bullDrawHeight - 200.0f;
+
+                        Rectangle destRec = {
+                            bulls[i].x - offsetX,
+                            bulls[i].y - offsetY,
+                            bullDrawWidth,
+                            bullDrawHeight};
+
+                        Vector2 origin = {0.0f, 0.0f};
 
                         DrawTexturePro(bullTex, sourceRec, destRec, origin, 0.0f, WHITE);
                     }
@@ -941,8 +937,8 @@ int main(void)
                         {
                             float walkCycleDuration = 0.6f; // full bob/lean cycle length, tune to taste
                             float cyclePos = fmodf(mimicWalkCycleTimer, walkCycleDuration) / walkCycleDuration;
-                            mimicBobOffset = sinf(cyclePos * 2.0f * PI * 2.0f) * 4.0f;  // 2 bobs per cycle (double-crutch gait)
-                            mimicLeanOffset = sinf(cyclePos * 2.0f * PI) * 6.0f;        // forward/back sway
+                            mimicBobOffset = sinf(cyclePos * 2.0f * PI * 2.0f) * 4.0f; // 2 bobs per cycle (double-crutch gait)
+                            mimicLeanOffset = sinf(cyclePos * 2.0f * PI) * 6.0f;       // forward/back sway
                             if (mimics[i].direction == -1)
                                 mimicLeanOffset = -mimicLeanOffset; // sway follows facing direction
                         }
@@ -961,7 +957,7 @@ int main(void)
 
                         Color mimicTint = (mimicHitFlashTimer[i] > 0.0f) ? RED : WHITE;
 
-                        DrawRectangle(mimics[i].x,mimics[i].y,100,200,RED);
+                        // DrawRectangle(mimics[i].x, mimics[i].y, 100, 200, RED); actual mimichitbox
                         DrawTexturePro(mimicTex, sourceRec, destRec, mimicOrigin, 0.0f, mimicTint);
 
                         // Attack-impact particle burst -- plays the instant the swing starts,
@@ -1014,7 +1010,7 @@ int main(void)
                 }
                 // if (dragon.alive)
                 //     DrawRectangle(dragon.x, dragon.y, 300, 200, DARKGREEN);
-                // UFO Drawing Start 
+                // UFO Drawing Start
                 if (dragon.alive)
                 {
                     int ufoFrame;
@@ -1038,7 +1034,6 @@ int main(void)
                     Vector2 ufoOrigin = {0.0f, 0.0f};
 
                     DrawTexturePro(texUFO, ufoSrc, ufoDest, ufoOrigin, 0.0f, WHITE);
-
                 }
                 if (dragon.dstate == Dattacking && dragon.alive == true)
                     DrawRectangleRec(dragon.firerect, WHITE);
@@ -1163,11 +1158,11 @@ int main(void)
     UnloadTexture(texUFO);
 
     // --- Unload Bull Textures ---
-UnloadTexture(texBullIdle);
-for (int i = 0; i < 4; i++)
-    UnloadTexture(texBullRun[i]);
-for (int i = 0; i < 2; i++)
-    UnloadTexture(texBullStop[i]);
+    UnloadTexture(texBullIdle);
+    for (int i = 0; i < 4; i++)
+        UnloadTexture(texBullRun[i]);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texBullStop[i]);
 
     // --- Unload Mimic Textures ---
     UnloadTexture(texMimicIdle);
