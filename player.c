@@ -3,12 +3,12 @@
 
 void UpdateMovementX(Player *P, float dt)
 {
-    if (IsKeyDown(KEY_A) && !P->dashing)
+    if (IsKeyDown(KEY_A) && !P->dashing && !IsKeyDown(KEY_D))
     {
         P->x -= P->speed * dt;
         P->dashflag = -1;
     }
-    if (IsKeyDown(KEY_D) && !P->dashing)
+    if (IsKeyDown(KEY_D) && !P->dashing && !IsKeyDown(KEY_A))
     {
 
         P->x += P->speed * dt;

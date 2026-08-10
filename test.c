@@ -37,7 +37,7 @@ int main(void)
         0.0f,         // velocityY
         15,           // damage
         0.0f,         // attackcooldown
-        100.0f, // health
+        100000000.0f, // health
         100.0f,       // maxhealth
         .5f,          // iframes
         true,         // onground
@@ -85,9 +85,9 @@ int main(void)
     int totemCount = 0;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 3;
+    int mimicCount = 1;
     int mimicattaks[mimicCount];
-    int bullCount = 0; ////edited 0 for testing
+    int bullCount = 1; ////edited 0 for testing
 
     Dragon dragon = {
         1500.0f, // x
@@ -187,10 +187,46 @@ int main(void)
     texMimicRun[0] = LoadTexture("img/mimicrun1.png");
     texMimicRun[1] = LoadTexture("img/mimicrun2.png");
 
+    // Mimic Attack Textures -- charging still uses the idle texture as a placeholder
+    // until a dedicated charge-frame asset exists
+    Texture2D texMimicAttack[2];
+    texMimicAttack[0] = LoadTexture("img/mimicattack1.png"); // strike release
+    texMimicAttack[1] = LoadTexture("img/mimicattack2.png"); // recovery back toward idle
+    Texture2D texMimicCharge = LoadTexture("img/mimicharge.png"); // charging wind-up pose
+
+    // Mimic attack-impact particle burst -- square canvas, replaces the YELLOW
+    // attackrect placeholder. Plays once the swing animation finishes rather than
+    // stretching into the hitbox shape, same idea as the double-jump burst frames.
+    Texture2D texMimicParticle[2];
+    texMimicParticle[0] = LoadTexture("img/mimicparticle1.png"); // burst begins
+    texMimicParticle[1] = LoadTexture("img/mimicparticle2.png"); // fade out
+
     // Mimic Animation Variables
     float mimicAnimTimer = 0.0f;
     int currentMimicRunFrame = 0;
     float mimicWalkCycleTimer = 0.0f; // continuous (never resets) -- drives the bob/lean offset independent of frame-swap timing
+
+    // Per-mimic attack animation timers (hardcoded to 3 to match the mimics[3] array elsewhere)
+    float mimicAttackAnimTimer[3] = {0.0f, 0.0f, 0.0f};
+    bool mimicAttackAnimActive[3] = {false, false, false}; // latched separately from mimicattaks[i], which may only pulse true for a single frame
+    const float MIMIC_ATTACK_ANIM_DURATION = 0.4f; // total time to play through both attack frames -- bumped up so the swing is actually visible
+
+    // Per-mimic attack-impact particle burst -- fires on the falling edge of
+    // mimicAttackAnimActive[i] (i.e. once the swing finishes), at wherever
+    // mimics[i].attackrect last was. attackrect itself is only valid on the single
+    // frame mimicattaks[i] pulses true, so it has to be snapshotted then and reused
+    // once the anim ends and the real attackrect may already be stale/zeroed.
+    float mimicParticleTimer[3] = {0.0f, 0.0f, 0.0f};
+    Rectangle mimicParticleRect[3] = {0}; // snapshot of attackrect from the last valid hit-check frame
+    const float MIMIC_PARTICLE_DURATION = 0.2f; // total time to play through both particle frames
+    const float MIMIC_PARTICLE_SIZE = 260.0f; // draw size (square) -- independent of attackrect's own dimensions, tune to taste
+
+    // Per-mimic hit-flash tracking -- detects a health drop frame-to-frame (rather than
+    // depending on any knockback/iframe internals inside enemies.c) and tints the sprite
+    // red for a short window when it happens, same idea as the player's iframes blink.
+    float mimicPrevHealth[3] = {100.0f, 100.0f, 100.0f}; // matches each mimic's starting health above
+    float mimicHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
+    const float MIMIC_HIT_FLASH_DURATION = 0.15f; // tune: how long the red tint holds after a hit
 
     // --- NEW: Animation Variables ---
     float sprintAnimTimer = 0.0f;
@@ -348,6 +384,60 @@ int main(void)
                     UpdateMimicGravity(&mimics[i], dt);
                     MimicCollisionY(&mimics[i]);
                     mimicattaks[i] = UpdateMimicLogic(&mimics[i], &P, dt, AttackCheck, &AttackRect);
+
+                    // mimicattaks[i] may only pulse true for a single frame (the actual hit
+                    // check), which was making the attack sprite flash on for one frame and
+                    // vanish. Latch a separate "is the attack animation playing" flag on the
+                    // rising edge and let it run its own fixed duration regardless of whether
+                    // the raw trigger flag stays true.
+                    bool wasMimicAttackAnimActive = mimicAttackAnimActive[i]; // captured before this frame's update, to detect the swing starting below
+
+                    if (mimicattaks[i] && !mimicAttackAnimActive[i])
+                    {
+                        mimicAttackAnimActive[i] = true;
+                        mimicAttackAnimTimer[i] = 0.0f;
+                    }
+                    if (mimicAttackAnimActive[i])
+                    {
+                        mimicAttackAnimTimer[i] += dt;
+                        if (mimicAttackAnimTimer[i] >= MIMIC_ATTACK_ANIM_DURATION)
+                        {
+                            mimicAttackAnimActive[i] = false;
+                            mimicAttackAnimTimer[i] = 0.0f;
+                        }
+                    }
+
+                    // attackrect is only meaningful on the single frame mimicattaks[i]
+                    // pulses true (the real hit-check) -- which is the same frame the
+                    // swing starts, so it's already valid at the moment we need it below.
+                    if (mimicattaks[i])
+                    {
+                        mimicParticleRect[i] = mimics[i].attackrect;
+                    }
+
+                    // Fire the impact burst the instant the swing starts (false -> true
+                    // edge of mimicAttackAnimActive), not when it ends -- reads as the
+                    // impact happening right as the attack lands.
+                    if (!wasMimicAttackAnimActive && mimicAttackAnimActive[i])
+                    {
+                        mimicParticleTimer[i] = MIMIC_PARTICLE_DURATION;
+                    }
+                    if (mimicParticleTimer[i] > 0.0f)
+                    {
+                        mimicParticleTimer[i] -= dt;
+                    }
+
+                    // Hit-flash: trigger on any frame where health just dropped, then count
+                    // down independent of what caused the drop.
+                    if (mimics[i].health < mimicPrevHealth[i])
+                    {
+                        mimicHitFlashTimer[i] = MIMIC_HIT_FLASH_DURATION;
+                    }
+                    mimicPrevHealth[i] = mimics[i].health;
+                    if (mimicHitFlashTimer[i] > 0.0f)
+                    {
+                        mimicHitFlashTimer[i] -= dt;
+                    }
                 }
 
                 for (int i = 0; i < archerCount; i++)
@@ -818,15 +908,26 @@ int main(void)
                         Texture2D mimicTex = texMimicIdle;
                         bool mimicIsWalking = false;
 
+                        // Attack pose takes priority over the state-based texture whenever
+                        // this mimic's attack flag is active, cycling strike -> recovery off
+                        // its own per-instance timer. Falls back to state-based texture (idle
+                        // /run) once the attack flag clears.
+                        if (mimicAttackAnimActive[i])
+                        {
+                            float attackProgress = mimicAttackAnimTimer[i] / MIMIC_ATTACK_ANIM_DURATION;
+                            if (attackProgress > 1.0f)
+                                attackProgress = 1.0f;
+                            mimicTex = (attackProgress < 0.5f) ? texMimicAttack[0] : texMimicAttack[1];
+                        }
                         // Map Mimic's current state to the correct sprite
-                        if (mimics[i].mstate == MChasing)
+                        else if (mimics[i].mstate == MChasing)
                         {
                             mimicTex = texMimicRun[currentMimicRunFrame];
                             mimicIsWalking = true;
                         }
-                        else // MIdle and MCharging both use idle for now, until charge/attack frames exist
+                        else // MIdle uses idle
                         {
-                            mimicTex = texMimicIdle;
+                            mimicTex = (mimics[i].mstate == MCharging) ? texMimicCharge : texMimicIdle;
                         }
 
                         // Handle Direction & Horizontally Flip Texture
@@ -845,8 +946,34 @@ int main(void)
                         // those non-uniformly (reads as the sprite going "slim"). Locking to a
                         // target height and deriving width from the texture's actual dimensions
                         // keeps every frame correctly proportioned no matter its source canvas.
-                        float mimicDrawHeight = 330.0f; // 1.5x the 200px hitbox height
-                        float mimicDrawWidth = ((float)mimicTex.width / (float)mimicTex.height) * mimicDrawHeight*1.3;
+                        // Fit the texture into a bounded box instead of locking height alone.
+                        // The idle/walk frames are tall portrait canvases (~720x1377) where
+                        // height-locking works fine, but the attack frames came back as
+                        // landscape canvases (1536x1024) -- height-locking those blew the
+                        // render width out to ~640px (the lunge reach), which read as the
+                        // sprite "growing" during attacks. Capping width too keeps that in
+                        // check, but the 1.3x cosmetic width boost (kept for the portrait
+                        // idle/walk frames) must NOT be applied when computing the
+                        // width-constrained branch's height, or it over-shrinks it.
+                        float mimicRawAspect = (float)mimicTex.width / (float)mimicTex.height;
+                        float maxMimicHeight = 330.0f; // 1.5x the 200px hitbox height
+                        float maxMimicWidth = 450.0f;  // tune: how wide a lunging/reaching attack pose is allowed to render
+                        float mimicDrawHeight, mimicDrawWidth;
+                        if (mimicRawAspect * 1.3f * maxMimicHeight <= maxMimicWidth)
+                        {
+                            // height-constrained: tall/narrow textures like idle and walk.
+                            // *1.3 preserves the existing idle/walk proportions.
+                            mimicDrawHeight = maxMimicHeight;
+                            mimicDrawWidth = mimicRawAspect * 1.3f * maxMimicHeight;
+                        }
+                        else
+                        {
+                            // width-constrained: wide/landscape textures like the attack frames.
+                            // No 1.3x boost here -- it was making the height shrink much more
+                            // than intended for this branch.
+                            mimicDrawWidth = maxMimicWidth;
+                            mimicDrawHeight = maxMimicWidth / mimicRawAspect;
+                        }
 
                         // Bob/lean offset -- only while walking, synced to the continuous
                         // mimicWalkCycleTimer (independent of the 2-frame swap timer) so the
@@ -875,11 +1002,42 @@ int main(void)
 
                         Vector2 mimicOrigin = {0.0f, 0.0f};
 
-                        DrawRectangle(mimics[i].x,mimics[i].y,100,200,RED);
-                        DrawTexturePro(mimicTex, sourceRec, destRec, mimicOrigin, 0.0f, WHITE);
+                        Color mimicTint = (mimicHitFlashTimer[i] > 0.0f) ? RED : WHITE;
 
-                        if (mimicattaks[i])
-                            DrawRectangleRec(mimics[i].attackrect, YELLOW); // keep this until a dedicated attack sprite exists
+                        DrawRectangle(mimics[i].x,mimics[i].y,100,200,RED);
+                        DrawTexturePro(mimicTex, sourceRec, destRec, mimicOrigin, 0.0f, mimicTint);
+
+                        // Attack-impact particle burst -- plays the instant the swing starts,
+                        // centered on the snapshotted attackrect rather than stretched into
+                        // it (attackrect's aspect is a hitbox shape, not the particle art's
+                        // square canvas). Frame-swap follows the same progress-based pattern
+                        // as the double-jump burst, just with 2 frames instead of 3.
+                        if (mimicParticleTimer[i] > 0.0f)
+                        {
+                            float mimicParticleElapsed = MIMIC_PARTICLE_DURATION - mimicParticleTimer[i];
+                            float mimicParticleProgress = mimicParticleElapsed / MIMIC_PARTICLE_DURATION;
+                            int mimicParticleFrame = (int)(mimicParticleProgress * 2.0f);
+                            if (mimicParticleFrame > 1)
+                                mimicParticleFrame = 1;
+                            if (mimicParticleFrame < 0)
+                                mimicParticleFrame = 0;
+
+                            Texture2D mimicParticleTex = texMimicParticle[mimicParticleFrame];
+                            Rectangle mimicParticleSource = {0.0f, 0.0f, (float)mimicParticleTex.width, (float)mimicParticleTex.height};
+
+                            float mimicParticleDrawSize = MIMIC_PARTICLE_SIZE;
+                            Vector2 mimicParticleCenter = {
+                                mimicParticleRect[i].x + mimicParticleRect[i].width / 2.0f,
+                                mimicParticleRect[i].y + mimicParticleRect[i].height / 2.0f};
+
+                            Rectangle mimicParticleDest = {
+                                mimicParticleCenter.x - mimicParticleDrawSize / 2.0f,
+                                mimicParticleCenter.y - mimicParticleDrawSize / 2.0f,
+                                mimicParticleDrawSize,
+                                mimicParticleDrawSize};
+
+                            DrawTexturePro(mimicParticleTex, mimicParticleSource, mimicParticleDest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+                        }
                     }
                 }
                 for (int i = 0; i < archerCount; i++)
@@ -912,7 +1070,7 @@ int main(void)
                 DrawRectangle(20, 20, 200 * (P.health / P.maxHealth), 20, RED); // foreground — width = maxWidth * (health / maxHealth)
                 EndDrawing();
             }
-        }    
+
             if (state == Gameover)
 
             {
@@ -941,6 +1099,12 @@ int main(void)
                         mimics[i].mstate = MIdle;
                         mimics[i].playerknockbacktimer = 0;
                         mimics[i].knockbackduration = 0;
+                        mimicPrevHealth[i] = 100.0f;
+                        mimicHitFlashTimer[i] = 0.0f;
+                        mimicAttackAnimActive[i] = false;
+                        mimicAttackAnimTimer[i] = 0.0f;
+                        mimicParticleTimer[i] = 0.0f;
+                        mimicParticleRect[i] = (Rectangle){0};
                     }
 
                     for (int i = 0; i < bullCount; i++)
@@ -985,7 +1149,7 @@ int main(void)
                 DrawText("Press ENTER to restart", screen_w / 2 - 150, screen_h / 2 + 60, 30, WHITE);
                 EndDrawing();
             }
-        
+        }
         // --- NEW: Unload textures before closing ---
     }
     UnloadTexture(texIdle);
@@ -1022,6 +1186,11 @@ for (int i = 0; i < 2; i++)
     UnloadTexture(texMimicIdle);
     for (int i = 0; i < 2; i++)
         UnloadTexture(texMimicRun[i]);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texMimicAttack[i]);
+    UnloadTexture(texMimicCharge);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texMimicParticle[i]);
 
     CloseWindow();
     return 0;
