@@ -123,6 +123,10 @@ int main(void)
     Texture2D spiritBurst = LoadTexture("Sprite/100x100_Burst.png");
     Texture2D spiritAfterBurst = LoadTexture("Sprite/300x100_AfterBurst.png");
 
+
+    // UFO Texture Load
+    Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
+
     SetExitKey(KEY_DELETE);
     HideCursor();
     ToggleFullscreen();
@@ -1055,10 +1059,37 @@ int main(void)
                     if (homingBullets[i].alive)
                         DrawCircle(homingBullets[i].x, homingBullets[i].y, 15, PINK);
                 }
+                // if (dragon.alive)
+                //     DrawRectangle(dragon.x, dragon.y, 300, 200, DARKGREEN);
+                // UFO Drawing Start 
                 if (dragon.alive)
-                    DrawRectangle(dragon.x, dragon.y, 300, 200, DARKGREEN);
+                {
+                    int ufoFrame;
+                    if (dragon.dstate == Dattacking)
+                    {
+                        // last 0.3s of the beam window plays the "winding down" frame
+                        ufoFrame = (dragon.attacktimer > 0.3f) ? 0 : 1;
+                    }
+                    else
+                    {
+                        ufoFrame = 2; // beam off / idle
+                    }
+
+                    float frameWidth = (float)texUFO.width / 3.0f;
+                    float srcW = frameWidth;
+                    if (dragon.direction == -1)
+                        srcW = -srcW; // same flip convention as spiritChase/currentTex
+
+                    Rectangle ufoSrc = {ufoFrame * frameWidth, 0.0f, srcW, (float)texUFO.height};
+                    Rectangle ufoDest = {dragon.x, dragon.y, 300.0f, 200.0f};
+                    Vector2 ufoOrigin = {0.0f, 0.0f};
+
+                    DrawTexturePro(texUFO, ufoSrc, ufoDest, ufoOrigin, 0.0f, WHITE);
+
+                }
                 if (dragon.dstate == Dattacking && dragon.alive == true)
-                    DrawRectangleRec(dragon.firerect, ORANGE);
+                    DrawRectangleRec(dragon.firerect, WHITE);
+
                 for (int i = 0; i < MAX_ARROWS; i++)
                 {
                     if (arrows[i].alive)
@@ -1175,6 +1206,9 @@ int main(void)
     UnloadTexture(spiritStartBurst);
     UnloadTexture(spiritBurst);
     UnloadTexture(spiritAfterBurst);
+
+    UnloadTexture(texUFO);
+
     // --- Unload Bull Textures ---
 UnloadTexture(texBullIdle);
 for (int i = 0; i < 4; i++)
