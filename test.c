@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        false,   // alive
+        true,   // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -731,53 +731,6 @@ int main(void)
                         dashParticleDrawSize};
                     DrawTexturePro(dashParticleTex, dashParticleSource, dashParticleDest, dashParticleOrigin, -90.0f, WHITE);
                 }
-
-                // for (int i = 0; i < bullCount; i++)
-                // {
-                //     if (bulls[i].alive == true)
-                //         DrawRectangle(bulls[i].x, bulls[i].y, 200, 200, BLUE);
-                // }
-
-//                 // --- Draw Bull Enemies ---
-// for (int i = 0; i < bullCount; i++)
-// {
-//     if (bulls[i].alive)
-//     {
-//         Texture2D bullTex = texBullIdle;
-
-//         // Map Bull's current state to the correct sprite
-//         // (Assuming your Bull state enum uses names like Charging, Decelerating, Idle)
-//         if (bulls[i].state == Charging)
-//         {
-//             bullTex = texBullRun[currentBullRunFrame];
-//         }
-//         else if (bulls[i].state == Stopping) // Or whatever your stopping state is named
-//         {
-//             bullTex = texBullStop[currentBullStopFrame];
-//         }
-//         else
-//         {
-//             bullTex = texBullIdle;
-//         }
-
-//         // Handle Direction & Horizontally Flip Texture
-//         // Since base textures face RIGHT, flip source width when facing LEFT (dir == -1)
-//         float sourceWidth = (float)bullTex.width;
-//         if (bulls[i].direction == -1) 
-//         {
-//             sourceWidth = -sourceWidth;
-//         }
-
-//         Rectangle sourceRec = { 0.0f, 0.0f, sourceWidth, (float)bullTex.height };
-        
-//         // Draw sprite matching the 200x200 hitbox dimensions
-//         Rectangle destRec = { bulls[i].x, bulls[i].y, 200.0f, 200.0f };
-//         Vector2 origin = { 0.0f, 0.0f };
-
-//         DrawTexturePro(bullTex, sourceRec, destRec, origin, 0.0f, WHITE);
-//     }
-// }
-// --- Draw Bull Enemies ---
                 for (int i = 0; i < bullCount; i++)
                 {
                     if (bulls[i].alive)
@@ -1081,7 +1034,7 @@ int main(void)
                         srcW = -srcW; // same flip convention as spiritChase/currentTex
 
                     Rectangle ufoSrc = {ufoFrame * frameWidth, 0.0f, srcW, (float)texUFO.height};
-                    Rectangle ufoDest = {dragon.x, dragon.y, 300.0f, 200.0f};
+                    Rectangle ufoDest = {dragon.x, dragon.y, 375.0f, 250.0f};
                     Vector2 ufoOrigin = {0.0f, 0.0f};
 
                     DrawTexturePro(texUFO, ufoSrc, ufoDest, ufoOrigin, 0.0f, WHITE);
