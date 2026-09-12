@@ -54,6 +54,7 @@ typedef struct
     Bullstate state;
     bool alive;
     float maxturntimer;
+    int level; // which currentLevel this enemy spawns/acts on
 } Bull;
 
 typedef struct
@@ -68,6 +69,7 @@ typedef struct
     bool spiritcollision;
     int knockdir;
     int knockdirY;
+    int level; // which currentLevel this enemy spawns/acts on
 } Spirit;
 
 typedef struct
@@ -90,6 +92,7 @@ typedef struct
     float playerknockbacktimer;
     float knockbackduration;
     float maxspeed;
+    int level; // which currentLevel this enemy spawns/acts on
 } Mimic;
 
 typedef struct
@@ -112,6 +115,7 @@ typedef struct
     float maxspeed;
     float arrowdamage;
     float maxattacktimer;
+    int level; // which currentLevel this enemy spawns/acts on
 } Archer;
 
 typedef struct
@@ -145,6 +149,7 @@ typedef struct
     float speed;
     float attackspeed;
     float wallDropSpeed;
+    int level; // which currentLevel this enemy spawns/acts on
 }Dragon;
 
 
@@ -162,6 +167,7 @@ typedef struct
     float knockbackduration;
     float playerecoil;
     int recoildirection;
+    int level; // which currentLevel this enemy spawns/acts on
 } Totem;
 
 typedef struct
