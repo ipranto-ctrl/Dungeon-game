@@ -24,7 +24,8 @@ void CollisionX(Player *P)
         {
             if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS) // wall
                 continue;
-            if (maps[currentLevel][i][j] == 1)
+            int tile = maps[currentLevel][i][j];
+            if (tile == 1 || (tile == 2 && !doorOpen)) // wall, or a closed door acting as one
             {
                 Rectangle tileRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
                 Rectangle playerRect = {P->x, P->y, 100, 200};
@@ -79,6 +80,33 @@ void CollisionX(Player *P)
     }
 }
 
+// Returns true if the player is currently overlapping an open gate tile.
+// Doesn't move or resolve anything -- CollisionX/CollisionY already treat an
+// open gate (tile 2, doorOpen true) as empty space, so this is purely a
+// "did we walk onto it" check for triggering the level transition.
+bool CheckGateCollision(Player *P)
+{
+    int tileX = (int)(P->x / TILE_SIZE);
+    int tileY = (int)(P->y / TILE_SIZE);
+
+    for (int i = tileY - 1; i <= tileY + 2; i++)
+    {
+        for (int j = tileX - 1; j <= tileX + 2; j++)
+        {
+            if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS)
+                continue;
+            if (maps[currentLevel][i][j] == 2 && doorOpen)
+            {
+                Rectangle gateRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+                Rectangle playerRect = {P->x, P->y, 100, 200};
+                if (CheckCollisionRecs(playerRect, gateRect))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 void CollisionY(Player *P)
 {
     int tileX = (int)(P->x / TILE_SIZE);
@@ -90,7 +118,8 @@ void CollisionY(Player *P)
         {
             if (i < 0 || i >= MAP_ROWS || j < 0 || j >= MAP_COLS)
                 continue;
-            if (maps[currentLevel][i][j] == 1)
+            int tile = maps[currentLevel][i][j];
+            if (tile == 1 || (tile == 2 && !doorOpen)) // wall, or a closed door acting as one
             {
                 Rectangle tileRect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
                 Rectangle playerRect = {P->x, P->y, 100, 200};

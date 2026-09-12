@@ -36,6 +36,7 @@ void UpdateDash(Player *P, float dt);
 void UpdateMovementX(Player *P, float dt);
 void UpdateJump(Player *P, float dt);
 void CollisionX(Player *P);
+bool CheckGateCollision(Player *P);
 void UpdateSpikeKnockback(Player *P, float dt);
 void UpdateGravity(Player *P, float dt);
 void CollisionY(Player *P);

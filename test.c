@@ -231,6 +231,25 @@ int main(void)
     float mimicHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
     const float MIMIC_HIT_FLASH_DURATION = 0.15f; // tune: how long the red tint holds after a hit
 
+    // Same hit-flash pattern applied to every other enemy type -- pull the
+    // starting value straight from each enemy's own struct/array instead of
+    // re-typing the numbers, so this can't drift out of sync if those change.
+    float bullPrevHealth[3] = {bulls[0].health, bulls[1].health, bulls[2].health};
+    float bullHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
+    const float BULL_HIT_FLASH_DURATION = 0.15f;
+
+    float archerPrevHealth[3] = {archers[0].health, archers[1].health, archers[2].health};
+    float archerHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
+    const float ARCHER_HIT_FLASH_DURATION = 0.15f;
+
+    float totemPrevHealth[1] = {totems[0].health};
+    float totemHitFlashTimer[1] = {0.0f};
+    const float TOTEM_HIT_FLASH_DURATION = 0.15f;
+
+    float dragonPrevHealth = dragon.health;
+    float dragonHitFlashTimer = 0.0f;
+    const float DRAGON_HIT_FLASH_DURATION = 0.15f;
+
     // --- NEW: Animation Variables ---
     float sprintAnimTimer = 0.0f;
     int currentSprintFrame = 0;
@@ -255,11 +274,16 @@ int main(void)
     float dashParticleX = 0.0f;         // world-space launch point captured at dash start, so the burst stays put while the player rockets away from it
     float dashParticleY = 0.0f;
 
+    // Prevents the gate from re-triggering every single frame while the
+    // player is still standing inside it (CheckGateCollision would otherwise
+    // fire again the instant they land at the new level's spawn point).
+    float gateCooldown = 0.0f;
+
     // initialing the scrolling camera for the 1st frame
     Camera2D camera = {0};
     camera.target = (Vector2){P.x, P.y};                        // what it looks at
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
-    camera.zoom = 0.7f;
+    camera.zoom = 1.2f;
 
     while (!WindowShouldClose())
     {
@@ -289,6 +313,10 @@ int main(void)
         {
             if (IsKeyPressed(KEY_ESCAPE))
                 state = Pausemenu;
+
+            // Gate is always open (doorOpen stays true) -- no enemies-dead
+            // gating for now. If that comes back later, set doorOpen here
+            // instead of leaving it permanently true in tilemap.c.
 
             float dt = GetFrameTime();
 
@@ -366,6 +394,22 @@ int main(void)
                     doubleJumpParticleTimer = 0.0f;
                 }
 
+                // --- Gate / level transition ---
+                if (gateCooldown > 0.0f)
+                    gateCooldown -= dt;
+                else if (CheckGateCollision(&P))
+                {
+                    currentLevel = (currentLevel + 1) % LEVEL_COUNT; // wraps back to level 0 after the last one
+                    P.x = levelSpawn[currentLevel].x;
+                    P.y = levelSpawn[currentLevel].y;
+                    P.velocityY = 0.0f;
+                    P.onground = false;
+                    P.doublejump = true;
+                    P.dashing = false;
+                    P.dashtimer = 0.15f;
+                    gateCooldown = 0.5f; // long enough to clear the gate tile before re-checking
+                }
+
                 AttackCheck = UpdateAttack(&P, dt, &AttackRect);
 
                 for (int i = 0; i < bullCount; i++)
@@ -377,6 +421,17 @@ int main(void)
                     BullCollisionY(&bulls[i]);
 
                     BullUpdateLogic(&bulls[i], &P, dt, AttackCheck, &AttackRect);
+
+                    // Hit-flash: same "did health just drop" detection as the mimics.
+                    if (bulls[i].health < bullPrevHealth[i])
+                    {
+                        bullHitFlashTimer[i] = BULL_HIT_FLASH_DURATION;
+                    }
+                    bullPrevHealth[i] = bulls[i].health;
+                    if (bullHitFlashTimer[i] > 0.0f)
+                    {
+                        bullHitFlashTimer[i] -= dt;
+                    }
 
                     CollisionX(&P);
                 }
@@ -449,11 +504,31 @@ int main(void)
                     UpdateArcherGravity(&archers[i], dt);
                     ArcherCollisionY(&archers[i]);
                     UpdateArcherLogic(&archers[i], &P, dt, AttackCheck, &AttackRect, arrows, MAX_ARROWS);
+
+                    if (archers[i].health < archerPrevHealth[i])
+                    {
+                        archerHitFlashTimer[i] = ARCHER_HIT_FLASH_DURATION;
+                    }
+                    archerPrevHealth[i] = archers[i].health;
+                    if (archerHitFlashTimer[i] > 0.0f)
+                    {
+                        archerHitFlashTimer[i] -= dt;
+                    }
                 }
 
                 DragonCollisionX(&dragon, dt);
                 DragonCollisionY(&dragon);
                 UpdateDragon(&dragon, &P, dt, AttackCheck, &AttackRect);
+
+                if (dragon.health < dragonPrevHealth)
+                {
+                    dragonHitFlashTimer = DRAGON_HIT_FLASH_DURATION;
+                }
+                dragonPrevHealth = dragon.health;
+                if (dragonHitFlashTimer > 0.0f)
+                {
+                    dragonHitFlashTimer -= dt;
+                }
 
                 UpdateArrows(arrows, MAX_ARROWS, &P, dt);
 
@@ -461,6 +536,16 @@ int main(void)
                 {
                     TotemCollision(&totems[i], &P);
                     UpdateTotemLogic(&totems[i], &P, dt, AttackCheck, &AttackRect, homingBullets, MAX_HOMING_BULLETS);
+
+                    if (totems[i].health < totemPrevHealth[i])
+                    {
+                        totemHitFlashTimer[i] = TOTEM_HIT_FLASH_DURATION;
+                    }
+                    totemPrevHealth[i] = totems[i].health;
+                    if (totemHitFlashTimer[i] > 0.0f)
+                    {
+                        totemHitFlashTimer[i] -= dt;
+                    }
                 }
                 UpdateHomingBullets(homingBullets, MAX_HOMING_BULLETS, &P, dt, AttackCheck, &AttackRect);
 
@@ -777,7 +862,9 @@ int main(void)
 
                         Vector2 origin = {0.0f, 0.0f};
 
-                        DrawTexturePro(bullTex, sourceRec, destRec, origin, 0.0f, WHITE);
+                        Color bullTint = (bullHitFlashTimer[i] > 0.0f) ? RED : WHITE;
+
+                        DrawTexturePro(bullTex, sourceRec, destRec, origin, 0.0f, bullTint);
                     }
                 }
 
@@ -851,6 +938,13 @@ int main(void)
                             DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GRAY);
                         if (maps[currentLevel][i][j] == 3)
                             DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
+                        if (maps[currentLevel][i][j] == 2) // door
+                        {
+                            if (doorOpen)
+                                DrawRectangleLines((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GREEN); // open: just an outline, fully walkable
+                            else
+                                DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, BROWN); // closed: solid gate
+                        }
                     }
                 }
                 // --- Draw Mimic Enemies ---
@@ -996,12 +1090,12 @@ int main(void)
                 for (int i = 0; i < archerCount; i++)
                 {
                     if (archers[i].alive)
-                        DrawRectangle(archers[i].x, archers[i].y, 100, 200, PURPLE);
+                        DrawRectangle(archers[i].x, archers[i].y, 100, 200, (archerHitFlashTimer[i] > 0.0f) ? RED : PURPLE);
                 }
                 for (int i = 0; i < totemCount; i++)
                 {
                     if (totems[i].alive)
-                        DrawRectangle(totems[i].x, totems[i].y, 100, 150, DARKPURPLE);
+                        DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE);
                 }
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
                 {
@@ -1033,7 +1127,9 @@ int main(void)
                     Rectangle ufoDest = {dragon.x, dragon.y, 375.0f, 250.0f};
                     Vector2 ufoOrigin = {0.0f, 0.0f};
 
-                    DrawTexturePro(texUFO, ufoSrc, ufoDest, ufoOrigin, 0.0f, WHITE);
+                    Color dragonTint = (dragonHitFlashTimer > 0.0f) ? RED : WHITE;
+
+                    DrawTexturePro(texUFO, ufoSrc, ufoDest, ufoOrigin, 0.0f, dragonTint);
                 }
                 if (dragon.dstate == Dattacking && dragon.alive == true)
                     DrawRectangleRec(dragon.firerect, WHITE);
@@ -1056,6 +1152,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     state = Mainmenu; // no type, just assignment
+                    currentLevel = 2; // reset to the same level the game boots into
                     P.x = 200.0f;
                     P.y = 824.0f;
                     P.health = 100.0f;
@@ -1092,6 +1189,8 @@ int main(void)
                         bulls[i].health = 90.0f;
                         bulls[i].state = Idle;
                         bulls[i].speed = 100.0f;
+                        bullPrevHealth[i] = 90.0f;
+                        bullHitFlashTimer[i] = 0.0f;
                     }
                     for (int i = 0; i < archerCount; i++)
                     {
@@ -1099,6 +1198,8 @@ int main(void)
                         archers[i].health = 80.0f;
                         archers[i].Astate = AIdle;
                         archers[i].attacktimer = 2.0f;
+                        archerPrevHealth[i] = 80.0f;
+                        archerHitFlashTimer[i] = 0.0f;
                     }
                     for (int i = 0; i < MAX_ARROWS; i++)
                         arrows[i].alive = false;
@@ -1111,6 +1212,8 @@ int main(void)
                     dragon.wallDropSpeed = 0;
                     dragon.playerknockbacktimer = 0;
                     dragon.playerecoil = 0;
+                    dragonPrevHealth = 500.0f;
+                    dragonHitFlashTimer = 0.0f;
 
                     for (int i = 0; i < totemCount; i++)
                     {
@@ -1118,6 +1221,8 @@ int main(void)
                         totems[i].health = 60.0f;
                         totems[i].attacktimer = totems[i].maxattacktimer;
                         totems[i].knockbackduration = 0;
+                        totemPrevHealth[i] = 60.0f;
+                        totemHitFlashTimer[i] = 0.0f;
                     }
                     for (int i = 0; i < MAX_HOMING_BULLETS; i++)
                         homingBullets[i].alive = false;

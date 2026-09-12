@@ -1,6 +1,17 @@
 #include "tilemap.h"
 
 int currentLevel = 2;
+bool doorOpen = true; // gate is always open -- see comment in tilemap.h
+
+// Spawn point used when the player enters this level through a gate.
+// x=300 is clear of every level's interior walls/spikes; y=200 is high
+// enough up that the player always falls onto the floor rather than into
+// it, same as the initial spawn set in test.c.
+Vector2 levelSpawn[LEVEL_COUNT] = {
+    {300.0f, 200.0f}, // entering level 0
+    {300.0f, 200.0f}, // entering level 1
+    {300.0f, 200.0f}, // entering level 2 (boss room)
+};
 // 0 = empty, 1 = solid, 2 = door (opens when all enemies dead)
 int maps[3][MAP_ROWS][MAP_COLS] = {
     {
@@ -60,8 +71,8 @@ int maps[3][MAP_ROWS][MAP_COLS] = {
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1}, // door -- level 2 had none before, added so the gate is actually testable here
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     },
 };
-//never add a spike next to the wall border
+// never add a spike next to the wall border
