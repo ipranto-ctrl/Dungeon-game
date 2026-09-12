@@ -71,18 +71,18 @@ int main(void)
     };
     Archer archers[3] = {
         // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg
-        {300.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.0f},
+        {300.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
         {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
-        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, .5f},
+        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
     };
-    int archerCount = 0;
+    int archerCount = 1;
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[1] = {
         {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f},
         // x       y       health damage atktimer maxatktimer alive knockbackduration
     };
-    int totemCount = 0;
+    int totemCount = 1;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
     int mimicCount = 1;
@@ -98,7 +98,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        true,    // alive
+        false,    // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -279,11 +279,40 @@ int main(void)
     // fire again the instant they land at the new level's spawn point).
     float gateCooldown = 0.0f;
 
+    // --- Load Archer Textures ---
+    Texture2D texArcherIdle = LoadTexture("img/oldidle.png");
+    
+    Texture2D texArcherWalk[2];
+    texArcherWalk[0] = LoadTexture("img/oldwalk1.png");
+    texArcherWalk[1] = LoadTexture("img/oldwalk2.png");
+    
+    Texture2D texArcherAttack[4];
+    texArcherAttack[0] = LoadTexture("img/oldthrow1.png");
+    texArcherAttack[1] = LoadTexture("img/oldthrow2.png");
+    texArcherAttack[2] = LoadTexture("img/oldthrow3.png");
+    texArcherAttack[3] = LoadTexture("img/oldthrow4.png");
+    
+    Texture2D texArcherSpawn[2]; // Used as the reload/respawn arrow animation
+    texArcherSpawn[0] = LoadTexture("img/oldspawn1.png");
+    texArcherSpawn[1] = LoadTexture("img/oldspawn2.png");
+
+    Texture2D texCake = LoadTexture("img/cake.png");
+
+    // Archer Animation Variables
+    float archerAnimTimerWalk = 0.0f;
+    int currentArcherWalkFrame = 0;
+    
+    // Per-archer visual state tracking
+    float archerSpawnTimer[3] = {0.0f, 0.0f, 0.0f}; 
+    float archerPrevAttackTimer[3] = {archers[0].attacktimer, archers[1].attacktimer, archers[2].attacktimer};
+    float archerPrevX[3] = {archers[0].x, archers[1].x, archers[2].x};
+
     // initialing the scrolling camera for the 1st frame
     Camera2D camera = {0};
     camera.target = (Vector2){P.x, P.y};                        // what it looks at
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
-    camera.zoom = 1.2f;
+    camera.zoom = 0.8f;
+
 
     while (!WindowShouldClose())
     {
@@ -338,6 +367,13 @@ int main(void)
                 {
                     sprintAnimTimer = 0.0f;
                     currentSprintFrame = 0;
+                }
+                // --- Update Archer Animation Timer ---
+                archerAnimTimerWalk += dt;
+                if (archerAnimTimerWalk >= 0.15f) 
+                {
+                    currentArcherWalkFrame = (currentArcherWalkFrame + 1) % 2;
+                    archerAnimTimerWalk = 0.0f;
                 }
 
                 // --- Update Bull Animation Timers ---
@@ -1087,10 +1123,79 @@ int main(void)
                         }
                     }
                 }
+   // --- Draw Archer Enemies (Hitbox + Sprite) ---
                 for (int i = 0; i < archerCount; i++)
                 {
                     if (archers[i].alive)
-                        DrawRectangle(archers[i].x, archers[i].y, 100, 200, (archerHitFlashTimer[i] > 0.0f) ? RED : PURPLE);
+                    {
+                        // 1. Draw the Hitbox Reference 
+                        // DrawRectangle(archers[i].x, archers[i].y, 100, 200, (archerHitFlashTimer[i] > 0.0f) ? RED : PURPLE);
+
+                        // 2. Determine and Draw the Sprite
+                        Texture2D currentArcherTex = texArcherIdle;
+
+                        // Detect if the archer just fired (timer jumps back up to max)
+                        if (archers[i].attacktimer > archerPrevAttackTimer[i] + 0.5f) {
+                            archerSpawnTimer[i] = 0.2f; // Trigger 2-frame spawn animation
+                        }
+                        archerPrevAttackTimer[i] = archers[i].attacktimer;
+
+                        // Detect movement to trigger walk cycle
+                        bool isWalking = (fabs(archers[i].x - archerPrevX[i]) > 0.5f);
+                        archerPrevX[i] = archers[i].x;
+
+                        // State Machine: Spawn -> Attack -> Walk -> Idle
+                        if (archerSpawnTimer[i] > 0.0f) 
+                        {
+                            archerSpawnTimer[i] -= dt;
+                            int frame = (archerSpawnTimer[i] > 0.1f) ? 0 : 1; 
+                            currentArcherTex = texArcherSpawn[frame];
+                        }
+                        else if (archers[i].attacktimer < 0.4f && archers[i].attacktimer > 0.0f) 
+                        {
+                            // Play 4-frame throw animation in the final 0.4s before firing
+                            int frame = (int)((0.4f - archers[i].attacktimer) / 0.1f);
+                            if (frame > 3) frame = 3;
+                            if (frame < 0) frame = 0;
+                            currentArcherTex = texArcherAttack[frame];
+                        }
+                        else if (isWalking) 
+                        {
+                            currentArcherTex = texArcherWalk[currentArcherWalkFrame];
+                        }
+                        else 
+                        {
+                            currentArcherTex = texArcherIdle;
+                        }
+
+                        // Handle Direction / Horizontal Flip
+                        float sourceWidth = (float)currentArcherTex.width;
+                        if (archers[i].direction == -1) 
+                        {
+                            sourceWidth = -sourceWidth; 
+                        }
+                        Rectangle sourceRec = { 0.0f, 0.0f, sourceWidth, (float)currentArcherTex.height };
+
+                        // Maintain Aspect Ratio based on the 200px tall hitbox, scaled up by 30%
+                        float archerAspect = (float)currentArcherTex.width / (float)currentArcherTex.height;
+                        float archerDrawHeight = 260.0f; // Increased by 30% (from 200.0f)
+                        float archerDrawWidth = archerAspect * archerDrawHeight;
+                        
+                        // Center horizontally over the 100px hitbox
+                        float offsetX = (archerDrawWidth - 100.0f) / 2.0f; 
+                        // Offset vertically so the larger sprite doesn't sink into the floor
+                        float offsetY = archerDrawHeight - 200.0f;
+
+                        Rectangle destRec = {
+                            archers[i].x - offsetX,
+                            archers[i].y - offsetY,
+                            archerDrawWidth,
+                            archerDrawHeight
+                        };
+                        
+                        Color archerTint = (archerHitFlashTimer[i] > 0.0f) ? RED : WHITE;
+                        DrawTexturePro(currentArcherTex, sourceRec, destRec, (Vector2){0,0}, 0.0f, archerTint);
+                    }
                 }
                 for (int i = 0; i < totemCount; i++)
                 {
@@ -1134,10 +1239,23 @@ int main(void)
                 if (dragon.dstate == Dattacking && dragon.alive == true)
                     DrawRectangleRec(dragon.firerect, WHITE);
 
+               // --- Draw Cake Arrows ---
                 for (int i = 0; i < MAX_ARROWS; i++)
                 {
-                    if (arrows[i].alive)
-                        DrawCircle(arrows[i].x, arrows[i].y, 20, YELLOW);
+                    if (arrows[i].alive) 
+                    {
+                        float cakeDrawSize = 85.0f; 
+                        Rectangle cakeSrc = { 0.0f, 0.0f, (float)texCake.width, (float)texCake.height };
+                        
+                        // Center cake visually on the coordinate point
+                        Rectangle cakeDest = {
+                            arrows[i].x - cakeDrawSize / 2.0f,
+                            arrows[i].y - cakeDrawSize / 2.0f,
+                            cakeDrawSize,
+                            cakeDrawSize
+                        };
+                        DrawTexturePro(texCake, cakeSrc, cakeDest, (Vector2){0, 0}, 0.0f, WHITE);
+                    }
                 }
                 EndMode2D();
                 DrawText(TextFormat("Dash Cooldown: %.1f", P.dashcooldown), 20, 40, 30, WHITE);
@@ -1278,6 +1396,11 @@ int main(void)
     UnloadTexture(texMimicCharge);
     for (int i = 0; i < 2; i++)
         UnloadTexture(texMimicParticle[i]);
+        UnloadTexture(texArcherIdle);
+    for (int i = 0; i < 2; i++) UnloadTexture(texArcherWalk[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(texArcherAttack[i]);
+    for (int i = 0; i < 2; i++) UnloadTexture(texArcherSpawn[i]);
+    UnloadTexture(texCake);
 
     CloseWindow();
     return 0;

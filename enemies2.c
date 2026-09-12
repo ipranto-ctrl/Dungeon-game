@@ -316,13 +316,13 @@ int UpdateArcherLogic(Archer *A, Player *P, float dt, int attackcheck, Rectangle
 
             if (minOverlap == overlapleft)
             {
-                A->x = P->x + 100;
                 P->x -= 50;
+                // A->x = P->x + 100;
             }
             if (minOverlap == overlapright)
             {
-                A->x = P->x - 200;
                 P->x += 50;
+                // A->x = P->x - 200;
             }
             if (minOverlap == overlaptop)
                 P->velocityY = -800.0f;
