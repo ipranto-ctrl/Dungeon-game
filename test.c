@@ -266,7 +266,7 @@ int main(void)
     // attackcooldown value, so the swing sprite reads fast/punchy regardless of how long the
     // cooldown before the next attack actually is.
     float attackAnimTimer = 0.0f;
-    const float ATTACK_ANIM_DURATION = .1f; // total time to play through all 3 attack frames; lower = snappier
+    const float ATTACK_ANIM_DURATION = .08f; // total time to play through all 3 attack frames; lower = snappier
     int attackDirection = 1;                // facing direction locked in at the moment the attack starts; used for AttackRect sprite flip only
     bool attackIsUpAttack = false;          // whether the current swing is the up-attack, locked in at the moment the attack starts
     int currentDashFrame = 0;
@@ -654,8 +654,8 @@ int main(void)
                     if (currentAttackFrame < 0)
                         currentAttackFrame = 0;
 
-                    if (P.attackcooldown <= 0.0f)
-                        isAttacking = false;
+                    if (attackAnimTimer >= ATTACK_ANIM_DURATION)
+                        isAttacking = false; // animation itself decides when the swing sprite ends -- attackcooldown still separately gates when you can attack again
 
                     currentTex = attackIsUpAttack ? texAttackUp[currentAttackFrame] : texAttackSide[currentAttackFrame];
                 }
