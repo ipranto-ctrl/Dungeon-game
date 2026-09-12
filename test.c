@@ -123,6 +123,9 @@ int main(void)
     Texture2D spiritBurst = LoadTexture("Sprite/100x100_Burst.png");
     Texture2D spiritAfterBurst = LoadTexture("Sprite/300x100_AfterBurst.png");
 
+    // Pause Menu texture Load
+    Texture2D texPauseMenu = LoadTexture("img/pause_menu.png");
+
     // UFO Texture Load
     Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
 
@@ -313,7 +316,6 @@ int main(void)
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
     camera.zoom = 0.8f;
 
-
     while (!WindowShouldClose())
     {
         if (state == Mainmenu)
@@ -322,7 +324,7 @@ int main(void)
                 state = Playing;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText("Press enter to start", screen_w / 2 - 500, screen_h / 2, 100, RED);
+            DrawText("Press enter to start", screen_w / 2 - 500, screen_h/ 2, 100, RED);
             EndDrawing();
         }
         if (state == Pausemenu)
@@ -333,15 +335,21 @@ int main(void)
                 state = Mainmenu;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText(TextFormat("Already Planning to"), screen_w / 2 - 600, screen_h / 2 - 200, 100, RED);
-            DrawText(TextFormat("       Give up?"), screen_w / 2 - 600, screen_h / 2 - 100, 100, RED);
-            DrawText(TextFormat("Press esc to go to the main menu\nPress enter to continue"), screen_w / 2 - 600, screen_h / 2, 50, RED);
+            Rectangle pauseSrc  = {0, 0, (float)texPauseMenu.width, (float)texPauseMenu.height}; //starts from 0,0 pixel from the main image
+            Rectangle pauseDest = {0, 0, (float)screen_w, (float)screen_h}; //where, and how big, to draw it on screen, describes rectangle on screen
+            DrawTexturePro(texPauseMenu, pauseSrc, pauseDest, (Vector2){0, 0}, 0.0f, WHITE); //0.0f means no rotation
             EndDrawing();
         }
         if (state == Playing)
         {
             if (IsKeyPressed(KEY_ESCAPE))
-                state = Pausemenu;
+            {
+            state = Pausemenu;
+            BeginDrawing();
+            ClearBackground(BLACK);
+            EndDrawing();
+            }
+               
 
             // Gate is always open (doorOpen stays true) -- no enemies-dead
             // gating for now. If that comes back later, set doorOpen here
@@ -1401,6 +1409,9 @@ int main(void)
     for (int i = 0; i < 4; i++) UnloadTexture(texArcherAttack[i]);
     for (int i = 0; i < 2; i++) UnloadTexture(texArcherSpawn[i]);
     UnloadTexture(texCake);
+
+    // --- Unload Pause Menu Texture ---
+    UnloadTexture(texPauseMenu);
 
     CloseWindow();
     return 0;
