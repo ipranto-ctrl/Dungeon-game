@@ -107,13 +107,21 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
 
             if (minOverlap == overlapleft)
             {
-                M->x = P->x + 100;
-                P->x -= 50;
+                // Player is overlapping the mimic's left side. Push the mimic
+                // right by exactly the current penetration depth so it ends
+                // up flush against the player (zero residual overlap) --
+                // same resolution style as the tile collision above. No
+                // fixed-offset snap, so there's nothing to fight or jitter
+                // against as the player keeps walking in.
+                float depth = (P->x + 100) - M->x;
+                M->x += depth;
             }
             if (minOverlap == overlapright)
             {
-                M->x = P->x - 200;
-                P->x += 50;
+                // Mirror of the branch above: player overlapping the mimic's
+                // right side, push the mimic left by the exact overlap depth.
+                float depth = (M->x + 100) - P->x;
+                M->x -= depth;
             }
             if (minOverlap == overlaptop)
                 P->velocityY = -800.0f;

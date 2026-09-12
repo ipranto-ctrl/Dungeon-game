@@ -232,13 +232,16 @@ void BullUpdateLogic(Bull *bn, Player *P, float dt, int AttackCheck, Rectangle *
 
             if (minOverlap == overlapleft)
             {
-                bn->x = P->x + 100;
-                P->x -= 50;
+                // Push the bull right by exactly the current penetration depth
+                // so it ends up flush against the player -- same fix as the
+                // mimic's push (see enemies2.c), no fixed-offset snap to fight.
+                float depth = (P->x + 100) - bn->x;
+                bn->x += depth;
             }
             if (minOverlap == overlapright)
             {
-                bn->x = P->x - 200;
-                P->x += 50;
+                float depth = (bn->x + 200) - P->x;
+                bn->x -= depth;
             }
             if (minOverlap == overlaptop)
                 P->velocityY = -800.0f;
@@ -311,13 +314,16 @@ void UpdateDragon(Dragon *D, Player *P, float dt, int attackcheck, Rectangle *at
 
             if (minOverlap == overlapleft)
             {
-                D->x = P->x + 100;
-                P->x -= 50;
+                // Same treatment as the mimic/bull pushes: move the dragon by
+                // the exact penetration depth instead of snapping to a fixed
+                // offset with a separate player pushback fighting it.
+                float depth = (P->x + 100) - D->x;
+                D->x += depth;
             }
             if (minOverlap == overlapright)
             {
-                D->x = P->x - 300;
-                P->x += 50;
+                float depth = (D->x + 300) - P->x;
+                D->x -= depth;
             }
             if (minOverlap == overlaptop)
                 P->velocityY = -800.0f;
