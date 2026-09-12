@@ -57,37 +57,38 @@ int main(void)
         true,   // alive
         false,
         0,
-        0 // spiritcollision
+        0, // spiritcollision
+        1  // level -- spirit spawns on level 1
     };
     Bull bulls[3] = {
-        {1000.0f, 1800.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f},
-        {500.0f, 1800.0f, 100.0f, 1500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 0.5f},
-        {1500.0f, 1800.0f, 100.0f, 4000.0f, 3500.0f, 90.0f, 20.0f, 1, 25000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.5f},
+        {1000.0f, 1800.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 1}, // level 1
+        {500.0f, 1800.0f, 100.0f, 1500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 0.5f, 1}, // level 1
+        {1500.0f, 1800.0f, 100.0f, 4000.0f, 3500.0f, 90.0f, 20.0f, 1, 25000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.5f, 1}, // level 1
     };
     Mimic mimics[3] = {
-        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f}, // add amx speed at the end
-        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f},
-        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f},
+        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // add amx speed at the end -- level 0
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0
+        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0
     };
     Archer archers[3] = {
-        // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg
-        {300.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
-        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
-        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
+        // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg maxatktimer level
+        {300.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
+        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
+        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
     };
-    int archerCount = 1;
+    int archerCount = 3; // was 1 -- all 3 archers[] entries are now real, level-gated enemies
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[1] = {
-        {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f},
-        // x       y       health damage atktimer maxatktimer alive knockbackduration
+        {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- boss room
+        // x       y       health damage atktimer maxatktimer alive knockbackduration playerecoil recoildirection level
     };
     int totemCount = 1;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 1;
+    int mimicCount = 3; // was 1 -- all 3 mimics[] entries are now real, level-gated enemies
     int mimicattaks[mimicCount];
-    int bullCount = 1; ////edited 0 for testing
+    int bullCount = 3; // was 1 -- all 3 bulls[] entries are now real, level-gated enemies
 
     Dragon dragon = {
         1500.0f, // x
@@ -109,6 +110,7 @@ int main(void)
         1000.0f, // speed
         500.0f,  // attackspeed
         0.0f,    // wallDropSpeed
+        2,       // level -- dragon boss lives on level 2
     };
     // dragon.health = 500.0f;
 
@@ -734,7 +736,7 @@ int main(void)
                 DrawTexturePro(currentTex, sourceRec, destRec, origin, 0.0f, playerTint);
 
                 // Spirit Sprites (drawn after the player so it renders on top)
-                if (en.alive == true)
+                if (en.alive == true && en.level == currentLevel)
                 {
                     Texture2D currentSpiritTex = spiritChase;
                     int frames = 1;
@@ -861,7 +863,7 @@ int main(void)
                 }
                 for (int i = 0; i < bullCount; i++)
                 {
-                    if (bulls[i].alive)
+                    if (bulls[i].alive && bulls[i].level == currentLevel)
                     {
                         Texture2D bullTex = texBullIdle;
 
@@ -994,7 +996,7 @@ int main(void)
                 // --- Draw Mimic Enemies ---
                 for (int i = 0; i < mimicCount; i++)
                 {
-                    if (mimics[i].alive)
+                    if (mimics[i].alive && mimics[i].level == currentLevel)
                     {
                         Texture2D mimicTex = texMimicIdle;
                         bool mimicIsWalking = false;
@@ -1134,7 +1136,7 @@ int main(void)
    // --- Draw Archer Enemies (Hitbox + Sprite) ---
                 for (int i = 0; i < archerCount; i++)
                 {
-                    if (archers[i].alive)
+                    if (archers[i].alive && archers[i].level == currentLevel)
                     {
                         // 1. Draw the Hitbox Reference 
                         // DrawRectangle(archers[i].x, archers[i].y, 100, 200, (archerHitFlashTimer[i] > 0.0f) ? RED : PURPLE);
@@ -1207,7 +1209,7 @@ int main(void)
                 }
                 for (int i = 0; i < totemCount; i++)
                 {
-                    if (totems[i].alive)
+                    if (totems[i].alive && totems[i].level == currentLevel)
                         DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE);
                 }
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
@@ -1218,7 +1220,7 @@ int main(void)
                 // if (dragon.alive)
                 //     DrawRectangle(dragon.x, dragon.y, 300, 200, DARKGREEN);
                 // UFO Drawing Start
-                if (dragon.alive)
+                if (dragon.alive && dragon.level == currentLevel)
                 {
                     int ufoFrame;
                     if (dragon.dstate == Dattacking)
