@@ -32,7 +32,7 @@ int main(void)
         0.2f,         // dashtimer
         1,            // dashflag
         0.0f,         // dashcooldown
-        824.0f,       // y
+        3824.0f,       // y
         10000.0f,     // gravity
         0.0f,         // velocityY
         15,           // damage
@@ -60,35 +60,78 @@ int main(void)
         0, // spiritcollision
         1  // level -- spirit spawns on level 1
     };
-    Bull bulls[3] = {
-        {1000.0f, 1800.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 1}, // level 1
-        {500.0f, 1800.0f, 100.0f, 1500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 0.5f, 1}, // level 1
-        {1500.0f, 1800.0f, 100.0f, 4000.0f, 3500.0f, 90.0f, 20.0f, 1, 25000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.5f, 1}, // level 1
+    // Second spirit instance dedicated to level 2's "upper platform" spirit/dragon
+    // pool (see spiritsToSpawn/dragonsToSpawn below). Starts dead -- the spawner
+    // brings it in and repositions/resets it each time it's its turn to spawn.
+    Spirit en2 = {
+        3000.0f, // x -- placeholder, repositioned on spawn
+        300.0f,  // y
+        400.0f,  // speed
+        50.0f,   // damage
+        0.0f,    // cooldown
+        0.0f,    // knockbackduration
+        false,   // alive -- spawner activates it
+        false,
+        0,
+        0, // spiritcollision
+        2  // level -- lives on level 2
     };
-    Mimic mimics[3] = {
-        {600.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // add amx speed at the end -- level 0
-        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0
-        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0
+    Bull bulls[6] = {
+        // Topmost platform of level 1: rows 1-3 are open air under the ceiling border,
+        // row 4 is the floor, broken into 3 walkable segments by gaps/spikes. One bull
+        // per segment, kept well clear of the border walls and the gaps/spikes between them.
+        {1564.0f, 312.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 0}, // left floor segment (cols 9-16)
+        {3484.0f, 312.0f, 100.0f, 1500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 0.5f, 0}, // middle floor segment (cols 21-34)
+        {4148.0f, 312.0f, 100.0f, 4000.0f, 3500.0f, 90.0f, 20.0f, 1, 25000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.5f, 0}, // right floor segment (cols 38-43)
+        // Level 2, base/bottom platform (row 33 -- the map's floor, spanning almost
+        // the whole width with nothing in the way). Two bulls patrolling the ground
+        // near where the player spawns.
+        {1000.0f, 4024.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2}, // base platform, left-of-center
+        {3200.0f, 4024.0f, 100.0f, 2000.0f, 3500.0f, 90.0f, 20.0f, -1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2}, // base platform, further right
+        // Level 2, platform 6 (row 5, cols 11-49 -- the topmost platform in the level).
+        {2000.0f, 440.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2},
     };
-    Archer archers[3] = {
+    Mimic mimics[6] = {
+        {3534.0f, 1720.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 1}, // level 1 -- middle-mid platform, row 15's cols 21-34 segment
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0 -- unused for now, mimicCount only spawns mimics[0]
+        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0 -- unused for now, mimicCount only spawns mimics[0]
+        // Level 2, first platform above the base (row 28, cols 12-37 -- the wide
+        // floor directly above the ground). Two mimics, kept clear of the wall
+        // edges at col 12/37 and the spike at col 20.
+        {1800.0f, 3384.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2}, // left of the spike
+        {3400.0f, 3384.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2}, // right of the spike
+        // Level 2, platform 5 (row 11, cols 11-31 -- immediate upward-left platform from platform 4).
+        {3200.0f, 1208.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2},
+    };
+    Archer archers[6] = {
         // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg maxatktimer level
-        {300.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
-        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
-        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
+        {3534.0f, 312.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 1}, // level 1 -- top-mid platform, row 4's cols 21-34 segment
+        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- unused for now, archerCount only spawns archers[0]
+        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- unused for now, archerCount only spawns archers[0]
+        // Level 2, platform 3 (row 19, cols 14-32 -- immediate platform above
+        // platform 2). Placed clear of the wall edges at col 14/32 and the
+        // spike at col 17.
+        {2700.0f, 2232.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 2},
+        // Level 2, platform 5 (row 11, cols 11-31 -- immediate upward-left platform from platform 4).
+        {1700.0f, 1208.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 2},
+        // Level 2, platform 6 (row 5, cols 11-49 -- the topmost platform in the level).
+        {4500.0f, 440.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 2},
     };
-    int archerCount = 0; // was 1 -- all 3 archers[] entries are now real, level-gated enemies
+    int archerCount = 6; // loop covers archers[0..5]: index 0 is level 1, indices 1-2 reserved/unused (level 0), indices 3-5 are the new level 2 archers (platforms 3, 5, 6)
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
-    Totem totems[1] = {
-        {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- boss room
+    Totem totems[3] = {
         // x       y       health damage atktimer maxatktimer alive knockbackduration playerecoil recoildirection level
+        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 0}, // level 0 -- middle of the map, on the 4-tile solid platform at row 23 cols 19-22 (spike-free; the vertical spike divider sits at col 25)
+        {576.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 2nd platform, the solid block at row 23 cols 1-8, leftward/up from the first platform
+        {5300.0f, 1720.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 4th platform, row 15 cols 37-49, immediate upward-right platform from platform 3
     };
-    int totemCount = 0;
+    int totemCount = 3; // 3 totems active: level 0 middle platform, level 2 2nd platform, level 2 4th platform
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 0; // was 1 -- all 3 mimics[] entries are now real, level-gated enemies
+    int mimicCount = 6; // loop covers mimics[0..5]: index 0 is level 1 (middle-mid platform), indices 1-2 are reserved/unused (level 0), indices 3-5 are the new level 2 mimics (platforms 1 and 5)
     int mimicattaks[mimicCount];
-    int bullCount = 0; // was 1 -- all 3 bulls[] entries are now real, level-gated enemies
+    int bullCount = 6; // active: bulls[0..2] (level 1, topmost platform) + bulls[3..5] (level 2, base platform + platform 6)
 
     Dragon dragon = {
         1500.0f, // x
@@ -113,6 +156,15 @@ int main(void)
         2,       // level -- dragon boss lives on level 2
     };
     // dragon.health = 500.0f;
+
+    // Level 2 "upper platform" spirit/dragon pool -----------------------------
+    // 3 spirits (en2) and 3 dragons (dragon) spawn over the course of level 2,
+    // one at a time -- never both alive together, and the next one only
+    // appears once the current one is destroyed. Which type goes next is
+    // picked at random (see the spawner in the main loop below). These count
+    // down as each one is spawned (not as they die).
+    int spiritsToSpawn = 3;
+    int dragonsToSpawn = 3;
 
     // float timer = 1; dont know what i used this for
 
@@ -214,9 +266,9 @@ int main(void)
     int currentMimicRunFrame = 0;
     float mimicWalkCycleTimer = 0.0f; // continuous (never resets) -- drives the bob/lean offset independent of frame-swap timing
 
-    // Per-mimic attack animation timers (hardcoded to 3 to match the mimics[3] array elsewhere)
-    float mimicAttackAnimTimer[3] = {0.0f, 0.0f, 0.0f};
-    bool mimicAttackAnimActive[3] = {false, false, false}; // latched separately from mimicattaks[i], which may only pulse true for a single frame
+    // Per-mimic attack animation timers (resized to 6 to match the mimics[6] array elsewhere)
+    float mimicAttackAnimTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    bool mimicAttackAnimActive[6] = {false, false, false, false, false, false}; // latched separately from mimicattaks[i], which may only pulse true for a single frame
     const float MIMIC_ATTACK_ANIM_DURATION = 0.4f;         // total time to play through both attack frames -- bumped up so the swing is actually visible
 
     // Per-mimic attack-impact particle burst -- fires on the falling edge of
@@ -224,31 +276,31 @@ int main(void)
     // mimics[i].attackrect last was. attackrect itself is only valid on the single
     // frame mimicattaks[i] pulses true, so it has to be snapshotted then and reused
     // once the anim ends and the real attackrect may already be stale/zeroed.
-    float mimicParticleTimer[3] = {0.0f, 0.0f, 0.0f};
-    Rectangle mimicParticleRect[3] = {0};       // snapshot of attackrect from the last valid hit-check frame
+    float mimicParticleTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    Rectangle mimicParticleRect[6] = {0};       // snapshot of attackrect from the last valid hit-check frame
     const float MIMIC_PARTICLE_DURATION = 0.2f; // total time to play through both particle frames
     const float MIMIC_PARTICLE_SIZE = 260.0f;   // draw size (square) -- independent of attackrect's own dimensions, tune to taste
 
     // Per-mimic hit-flash tracking -- detects a health drop frame-to-frame (rather than
     // depending on any knockback/iframe internals inside enemies.c) and tints the sprite
     // red for a short window when it happens, same idea as the player's iframes blink.
-    float mimicPrevHealth[3] = {100.0f, 100.0f, 100.0f}; // matches each mimic's starting health above
-    float mimicHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
+    float mimicPrevHealth[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f}; // matches each mimic's starting health above
+    float mimicHitFlashTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     const float MIMIC_HIT_FLASH_DURATION = 0.15f; // tune: how long the red tint holds after a hit
 
     // Same hit-flash pattern applied to every other enemy type -- pull the
     // starting value straight from each enemy's own struct/array instead of
     // re-typing the numbers, so this can't drift out of sync if those change.
-    float bullPrevHealth[3] = {bulls[0].health, bulls[1].health, bulls[2].health};
-    float bullHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
+    float bullPrevHealth[6] = {bulls[0].health, bulls[1].health, bulls[2].health, bulls[3].health, bulls[4].health, bulls[5].health};
+    float bullHitFlashTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     const float BULL_HIT_FLASH_DURATION = 0.15f;
 
-    float archerPrevHealth[3] = {archers[0].health, archers[1].health, archers[2].health};
-    float archerHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
+    float archerPrevHealth[6] = {archers[0].health, archers[1].health, archers[2].health, archers[3].health, archers[4].health, archers[5].health};
+    float archerHitFlashTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     const float ARCHER_HIT_FLASH_DURATION = 0.15f;
 
-    float totemPrevHealth[1] = {totems[0].health};
-    float totemHitFlashTimer[1] = {0.0f};
+    float totemPrevHealth[3] = {totems[0].health, totems[1].health, totems[2].health};
+    float totemHitFlashTimer[3] = {0.0f, 0.0f, 0.0f};
     const float TOTEM_HIT_FLASH_DURATION = 0.15f;
 
     float dragonPrevHealth = dragon.health;
@@ -308,9 +360,9 @@ int main(void)
     int currentArcherWalkFrame = 0;
     
     // Per-archer visual state tracking
-    float archerSpawnTimer[3] = {0.0f, 0.0f, 0.0f}; 
-    float archerPrevAttackTimer[3] = {archers[0].attacktimer, archers[1].attacktimer, archers[2].attacktimer};
-    float archerPrevX[3] = {archers[0].x, archers[1].x, archers[2].x};
+    float archerSpawnTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    float archerPrevAttackTimer[6] = {archers[0].attacktimer, archers[1].attacktimer, archers[2].attacktimer, archers[3].attacktimer, archers[4].attacktimer, archers[5].attacktimer};
+    float archerPrevX[6] = {archers[0].x, archers[1].x, archers[2].x, archers[3].x, archers[4].x, archers[5].x};
     // --- Load Totem Textures ---
 Texture2D texTotem[4];
 texTotem[0] = LoadTexture("img/totem1.png");
@@ -335,7 +387,7 @@ int currentTotemFrame = 0;
     Camera2D camera = {0};
     camera.target = (Vector2){P.x, P.y};                        // what it looks at
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
-    camera.zoom = 0.8f;
+    camera.zoom = 0.4f;
 
     while (!WindowShouldClose())
     {
@@ -345,7 +397,8 @@ int currentTotemFrame = 0;
                 state = Playing;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText("Press enter to start", screen_w / 2 - 500, screen_h/ 2, 100, RED);
+            DrawText("LDF PRESENTS", screen_w / 2 - 500, screen_h/ 2, 100, RED);
+            DrawText("UNTITLED DUNGEON CRAWLER", screen_w / 2 - 300, screen_h/ 2-200, 100, RED);
             EndDrawing();
         }
         if (state == Pausemenu)
@@ -628,6 +681,56 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                 UpdateHomingBullets(homingBullets, MAX_HOMING_BULLETS, &P, dt, AttackCheck, &AttackRect);
 
                 spiritupdate(&en, &P, dt);
+                spiritupdate(&en2, &P, dt);
+
+                // --- Level 2 "upper platform" spirit/dragon spawner ---
+                // Only relevant on level 2, and only when nothing from this pool is
+                // currently alive. Picks a type at random (forced to whichever type
+                // still has some left, if only one does), and resets its stats fresh.
+                // Spirit spawns in the open air around the topmost platform; dragon
+                // spawns lower down, under platform 4 (row 15, cols 37-49), in the
+                // open air of rows 16-17 -- not right up on the topmost platform.
+                if (currentLevel == 2 && !en2.alive && !dragon.alive && (spiritsToSpawn > 0 || dragonsToSpawn > 0))
+                {
+                    bool spawnSpirit;
+                    if (spiritsToSpawn <= 0)
+                        spawnSpirit = false;
+                    else if (dragonsToSpawn <= 0)
+                        spawnSpirit = true;
+                    else
+                        spawnSpirit = (GetRandomValue(0, 1) == 0);
+
+                    if (spawnSpirit)
+                    {
+                        en2.x = (float)GetRandomValue(1600, 4400);
+                        en2.y = 300.0f; // open air above/around the topmost platform (row 5)
+                        en2.speed = 400.0f;
+                        en2.damage = 50.0f;
+                        en2.cooldown = 0.0f;
+                        en2.knockbackduration = 0.0f;
+                        en2.spiritcollision = false;
+                        en2.alive = true;
+                        spiritsToSpawn--;
+                    }
+                    else
+                    {
+                        dragon.x = (float)GetRandomValue(4900, 6100); // roughly under platform 4's own span (cols 37-49)
+                        dragon.y = 2100.0f;                           // rows 16-17, the open air just below platform 4's floor
+                        dragon.health = 50.0f;
+                        dragon.chargetimer = 0.0f;
+                        dragon.attacktimer = 0.0f;
+                        dragon.dstate = Didle;
+                        dragon.direction = 1;
+                        dragon.knockbackduration = 0.0f;
+                        dragon.playerknockbacktimer = 0.0f;
+                        dragon.playerecoil = 0.0f;
+                        dragon.recoildirection = 0;
+                        dragon.wallDropSpeed = 0.0f;
+                        dragon.alive = true;
+                        dragonPrevHealth = dragon.health;
+                        dragonsToSpawn--;
+                    }
+                }
 
                 CollisionX(&P);
 
@@ -835,6 +938,74 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                     Rectangle dest = {en.x + spiritOffsetX, en.y + spiritOffsetY, scaleSize, scaleSize};
                     Vector2 spiritOrigin = {0, 0};
                     DrawTexturePro(currentSpiritTex, src, dest, spiritOrigin, 0.0f, WHITE);
+                }
+
+                // Second spirit instance (en2) -- level 2's upper-platform pool.
+                // Same draw logic as en above, just driven off en2's own state.
+                if (en2.alive == true && en2.level == currentLevel)
+                {
+                    Texture2D currentSpiritTex2 = spiritChase;
+                    int frames2 = 1;
+                    int currentFrame2 = 0;
+                    float scaleSize2 = 100.0f;
+                    float spiritOffsetX2 = -25.0f;
+                    float spiritOffsetY2 = -25.0f;
+
+                    if (en2.spiritcollision == true && en2.knockbackduration <= 0)
+                    {
+                        if (en2.cooldown > 0.1f)
+                        {
+                            currentSpiritTex2 = spiritCharge;
+                            frames2 = 3;
+                            float timeElapsed2 = 0.5f - en2.cooldown;
+                            currentFrame2 = (int)(timeElapsed2 / (0.4f / 3.0f));
+                            if (currentFrame2 > 2)
+                                currentFrame2 = 2;
+                        }
+                        else
+                        {
+                            currentSpiritTex2 = spiritStartBurst;
+                            frames2 = 1;
+                            currentFrame2 = 0;
+                            scaleSize2 = 300.0f;
+                            spiritOffsetX2 = -125.0f;
+                            spiritOffsetY2 = -125.0f;
+                        }
+                    }
+                    else if (en2.knockbackduration > 0)
+                    {
+                        if (en2.knockbackduration > 0.2f)
+                        {
+                            currentSpiritTex2 = spiritBurst;
+                            frames2 = 1;
+                            currentFrame2 = 0;
+                            scaleSize2 = 400.0f;
+                            spiritOffsetX2 = -175.0f;
+                            spiritOffsetY2 = -175.0f;
+                        }
+                        else
+                        {
+                            currentSpiritTex2 = spiritAfterBurst;
+                            frames2 = 3;
+                            float timeElapsed2 = 0.2f - en2.knockbackduration;
+                            currentFrame2 = (int)(timeElapsed2 / (0.2f / 3.0f));
+                            if (currentFrame2 > 2)
+                                currentFrame2 = 2;
+                            scaleSize2 = 400.0f;
+                            spiritOffsetX2 = -175.0f;
+                            spiritOffsetY2 = -175.0f;
+                        }
+                    }
+
+                    float frameWidth2 = (float)currentSpiritTex2.width / frames2;
+                    Rectangle src2 = {currentFrame2 * frameWidth2, 0, frameWidth2, (float)currentSpiritTex2.height};
+
+                    if (!en2.spiritcollision && en2.x > P.x)
+                        src2.width = -src2.width;
+
+                    Rectangle dest2 = {en2.x + spiritOffsetX2, en2.y + spiritOffsetY2, scaleSize2, scaleSize2};
+                    Vector2 spiritOrigin2 = {0, 0};
+                    DrawTexturePro(currentSpiritTex2, src2, dest2, spiritOrigin2, 0.0f, WHITE);
                 }
 
                 // Draw the double-jump particle burst at the fixed trigger position, if active
@@ -1248,39 +1419,34 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                 }
                 for (int i = 0; i < totemCount; i++)
                 {
-                    if (totems[i].alive)
-                        // DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE);
-                        for (int i = 0; i < totemCount; i++)
-{
-    if (totems[i].alive)
-    {
-        // DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE); // Old placeholder
+                    if (totems[i].alive && totems[i].level == currentLevel)
+                    {
+                        // DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE); // Old placeholder
 
-        Texture2D currentTotemTex = texTotem[currentTotemFrame];
-        Rectangle sourceRec = {0.0f, 0.0f, (float)currentTotemTex.width, (float)currentTotemTex.height};
+                        Texture2D currentTotemTex = texTotem[currentTotemFrame];
+                        Rectangle sourceRec = {0.0f, 0.0f, (float)currentTotemTex.width, (float)currentTotemTex.height};
 
-        // Scale based on the 150px tall hitbox height to maintain native aspect ratio
-        float totemAspect = (float)currentTotemTex.width / (float)currentTotemTex.height;
-        float totemDrawHeight = 350.0f; // Set this higher if your sprite should be larger than the hitbox
-        float totemDrawWidth = totemAspect * totemDrawHeight;
+                        // Scale based on the 150px tall hitbox height to maintain native aspect ratio
+                        float totemAspect = (float)currentTotemTex.width / (float)currentTotemTex.height;
+                        float totemDrawHeight = 350.0f; // Set this higher if your sprite should be larger than the hitbox
+                        float totemDrawWidth = totemAspect * totemDrawHeight;
 
-        // Center horizontally over the 100px width hitbox and align feet to the bottom
-        float offsetX = (totemDrawWidth - 100.0f) / 2.0f;
-        float offsetY = totemDrawHeight - 150.0f; 
+                        // Center horizontally over the 100px width hitbox and align feet to the bottom
+                        float offsetX = (totemDrawWidth - 100.0f) / 2.0f;
+                        float offsetY = totemDrawHeight - 150.0f;
 
-        Rectangle destRec = {
-            totems[i].x - offsetX,
-            totems[i].y - offsetY,
-            totemDrawWidth,
-            totemDrawHeight
-        };
+                        Rectangle destRec = {
+                            totems[i].x - offsetX,
+                            totems[i].y - offsetY,
+                            totemDrawWidth,
+                            totemDrawHeight
+                        };
 
-        // Retain the red damage flash logic
-        Color totemTint = (totemHitFlashTimer[i] > 0.0f) ? RED : WHITE;
-        
-        DrawTexturePro(currentTotemTex, sourceRec, destRec, (Vector2){0,0}, 0.0f, totemTint);
-    }
-}
+                        // Retain the red damage flash logic
+                        Color totemTint = (totemHitFlashTimer[i] > 0.0f) ? RED : WHITE;
+
+                        DrawTexturePro(currentTotemTex, sourceRec, destRec, (Vector2){0,0}, 0.0f, totemTint);
+                    }
                 }
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
                 {
@@ -1352,7 +1518,7 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                     state = Mainmenu; // no type, just assignment
                     currentLevel = 2; // reset to the same level the game boots into
                     P.x = 200.0f;
-                    P.y = 824.0f;
+                    P.y = 3824.0f;
                     P.health = 100.0f;
                     P.velocityY = 0;
                     P.iframes = 0;
@@ -1365,6 +1531,14 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                     en.y = 200.0f;
                     en.spiritcollision = false;
                     en.knockbackduration = 0;
+
+                    // Level 2 upper-platform pool -- back to dormant, fresh counts;
+                    // the spawner in the main loop brings the first one in.
+                    en2.alive = false;
+                    en2.spiritcollision = false;
+                    en2.knockbackduration = 0;
+                    spiritsToSpawn = 3;
+                    dragonsToSpawn = 3;
 
                     for (int i = 0; i < mimicCount; i++)
                     {
@@ -1402,15 +1576,15 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                     for (int i = 0; i < MAX_ARROWS; i++)
                         arrows[i].alive = false;
 
-                    dragon.alive = true;
-                    dragon.health = 500.0f;
+                    dragon.alive = false;
+                    dragon.health = 50.0f;
                     dragon.dstate = Didle;
                     dragon.x = 1500.0f;
                     dragon.y = 500.0f;
                     dragon.wallDropSpeed = 0;
                     dragon.playerknockbacktimer = 0;
                     dragon.playerecoil = 0;
-                    dragonPrevHealth = 500.0f;
+                    dragonPrevHealth = 50.0f;
                     dragonHitFlashTimer = 0.0f;
 
                     for (int i = 0; i < totemCount; i++)
