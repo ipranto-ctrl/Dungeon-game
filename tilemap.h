@@ -5,8 +5,8 @@
 #include <raylib.h>
 
 #define TILE_SIZE 128 //ACTUAL TILE SIZE 128
-#define MAP_ROWS 17
-#define MAP_COLS 25
+#define MAP_ROWS 34
+#define MAP_COLS 50
 #define LEVEL_COUNT 3
 
 // tile values: 0 = empty, 1 = solid wall, 2 = door/gate, 3 = spike

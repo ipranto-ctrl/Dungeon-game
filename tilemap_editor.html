@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tilemap Editor</title>
+<style>
+  :root {
+    --c0: #1e1e2e; /* empty */
+    --c1: #6c7086; /* solid */
+    --c2: #a6e3a1; /* door */
+    --c3: #f38ba8; /* spike */
+  }
+  body {
+    background: #11111b;
+    color: #cdd6f4;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.sub { color: #a6adc8; margin-top: 0; margin-bottom: 16px; font-size: 13px; }
+
+  #legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid #313244; }
+
+  #grid {
+    display: grid;
+    gap: 1px;
+    background: #313244;
+    border: 1px solid #313244;
+    margin-bottom: 16px;
+    user-select: none;
+  }
+  .cell {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #11111b;
+  }
+  .cell:hover { outline: 2px solid #89b4fa; outline-offset: -2px; }
+  .cell.selected { outline: 2px solid #f9e2af; outline-offset: -2px; box-shadow: 0 0 0 1px #f9e2af inset; }
+  .v0 { background: var(--c0); color: #45475a; }
+  .v1 { background: var(--c1); }
+  .v2 { background: var(--c2); }
+  .v3 { background: var(--c3); }
+
+  #dimControls {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 13px;
+  }
+  #dimControls input[type="number"] {
+    width: 60px;
+    background: #181825;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+
+  #controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { background: #45475a; }
+  button.primary { background: #89b4fa; color: #11111b; font-weight: bold; }
+  button.primary:hover { background: #74a8f8; }
+
+  #output {
+    width: 100%;
+    max-width: 700px;
+  }
+  textarea {
+    width: 100%;
+    height: 220px;
+    background: #181825;
+    color: #a6e3a1;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #313244;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+  .hint { font-size: 12px; color: #a6adc8; margin-top: 6px; }
+  #copyMsg { font-size: 12px; color: #a6e3a1; margin-left: 8px; opacity: 0; transition: opacity 0.2s; }
+</style>
+</head>
+<body>
+
+<h1>Tilemap Editor</h1>
+<p class="sub">Click a cell to select it, then press <strong>0/1/2/3</strong> to set its value (auto-advances). Arrow keys move the selection. Left-click still cycles forward, right-click cycles backward.</p>
+
+<div id="legend">
+  <div class="legend-item"><span class="swatch" style="background:var(--c0)"></span>0 = empty</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c1)"></span>1 = solid</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c2)"></span>2 = door</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c3)"></span>3 = spike</div>
+</div>
+
+<div id="dimControls">
+  <label>Rows (height): <input type="number" id="rowsInput" min="1" max="60" value="17"></label>
+  <label>Cols (width): <input type="number" id="colsInput" min="1" max="60" value="25"></label>
+  <button id="resizeBtn">Resize</button>
+</div>
+
+<div id="grid"></div>
+
+<div id="controls">
+  <button id="clearBtn">Clear (all 0)</button>
+  <button id="wallBtn">Reset to bordered room</button>
+  <button id="fillBtn">Fill all 1</button>
+  <button id="copyBtn" class="primary">Copy C array</button>
+  <span id="copyMsg">Copied!</span>
+</div>
+
+<div id="output">
+  <textarea id="codeOut" readonly></textarea>
+  <div class="hint">Set rows/cols above and click "Resize" (existing tiles are kept where they still fit). When done, click "Copy C array" and paste over <code>maps[currentLevel]</code> (or wherever you need it) — just make sure your <code>MAP_ROWS</code>/<code>MAP_COLS</code> constants match.</div>
+</div>
+
+<script>
+  let ROWS = 17;
+  let COLS = 25;
+  const VAR_NAME = "testMap";
+
+  const grid = document.getElementById('grid');
+
+  // data model
+  let data = [];
+
+  function makeBorderedRoom(rows, cols) {
+    let d = [];
+    for (let r = 0; r < rows; r++) {
+      let row = [];
+      for (let c = 0; c < cols; c++) {
+        row.push((r === 0 || r === rows - 1 || c === 0 || c === cols - 1) ? 1 : 0);
+      }
+      d.push(row);
+    }
+    return d;
+  }
+
+  data = makeBorderedRoom(ROWS, COLS);
+
+  const cells = [];
+  let selR = 0, selC = 0;
+
+  function renderCell(r, c) {
+    const cell = cells[r][c];
+    const val = data[r][c];
+    cell.className = 'cell v' + val;
+    if (r === selR && c === selC) cell.classList.add('selected');
+    cell.textContent = val === 0 ? '' : val;
+  }
+
+  function renderAll() {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        renderCell(r, c);
+  }
+
+  function selectCell(r, c) {
+    const prevR = selR, prevC = selC;
+    selR = Math.max(0, Math.min(ROWS - 1, r));
+    selC = Math.max(0, Math.min(COLS - 1, c));
+    renderCell(prevR, prevC);
+    renderCell(selR, selC);
+  }
+
+  function buildGrid() {
+    grid.style.gridTemplateColumns = `repeat(${COLS}, 22px)`;
+    grid.innerHTML = '';
+    cells.length = 0;
+    for (let r = 0; r < ROWS; r++) {
+      const rowArr = [];
+      for (let c = 0; c < COLS; c++) {
+        const cell = document.createElement('div');
+        cell.tabIndex = -1;
+        cell.addEventListener('click', () => {
+          selectCell(r, c);
+          data[r][c] = (data[r][c] + 1) % 4;
+          renderCell(r, c);
+          updateCode();
+        });
+        cell.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          selectCell(r, c);
+          data[r][c] = (data[r][c] + 3) % 4;
+          renderCell(r, c);
+          updateCode();
+        });
+        grid.appendChild(cell);
+        rowArr.push(cell);
+      }
+      cells.push(rowArr);
+    }
+    if (selR >= ROWS) selR = ROWS - 1;
+    if (selC >= COLS) selC = COLS - 1;
+    renderAll();
+  }
+
+  function updateCode() {
+    let lines = [];
+    lines.push(`int ${VAR_NAME}[MAP_ROWS][MAP_COLS] = {`);
+    for (let r = 0; r < ROWS; r++) {
+      lines.push('    {' + data[r].join(', ') + '},');
+    }
+    lines.push('};');
+    document.getElementById('codeOut').value = lines.join('\n');
+  }
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        data[r][c] = 0;
+    renderAll();
+    updateCode();
+  });
+
+  document.getElementById('fillBtn').addEventListener('click', () => {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        data[r][c] = 1;
+    renderAll();
+    updateCode();
+  });
+
+  document.getElementById('wallBtn').addEventListener('click', () => {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        data[r][c] = (r === 0 || r === ROWS - 1 || c === 0 || c === COLS - 1) ? 1 : 0;
+      }
+    }
+    renderAll();
+    updateCode();
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const textarea = document.getElementById('codeOut');
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).then(() => {
+      const msg = document.getElementById('copyMsg');
+      msg.style.opacity = 1;
+      setTimeout(() => { msg.style.opacity = 0; }, 1200);
+    });
+  });
+
+  document.getElementById('resizeBtn').addEventListener('click', () => {
+    const rowsInput = document.getElementById('rowsInput');
+    const colsInput = document.getElementById('colsInput');
+    let newRows = parseInt(rowsInput.value, 10);
+    let newCols = parseInt(colsInput.value, 10);
+
+    if (!newRows || newRows < 1) newRows = ROWS;
+    if (!newCols || newCols < 1) newCols = COLS;
+    newRows = Math.min(newRows, 60);
+    newCols = Math.min(newCols, 60);
+    rowsInput.value = newRows;
+    colsInput.value = newCols;
+
+    // build new data, preserving overlap with old data where possible
+    let newData = [];
+    for (let r = 0; r < newRows; r++) {
+      let row = [];
+      for (let c = 0; c < newCols; c++) {
+        if (r < data.length && c < data[0].length) {
+          row.push(data[r][c]);
+        } else {
+          row.push(0);
+        }
+      }
+      newData.push(row);
+    }
+
+    ROWS = newRows;
+    COLS = newCols;
+    data = newData;
+    buildGrid();
+    updateCode();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    // ignore typing into the number inputs or textarea
+    const tag = document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (e.key >= '0' && e.key <= '3') {
+      data[selR][selC] = parseInt(e.key, 10);
+      renderCell(selR, selC);
+      updateCode();
+      // auto-advance left-to-right, wrapping to next row
+      if (selC < COLS - 1) {
+        selectCell(selR, selC + 1);
+      } else if (selR < ROWS - 1) {
+        selectCell(selR + 1, 0);
+      }
+      e.preventDefault();
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowRight': selectCell(selR, selC + 1); e.preventDefault(); break;
+      case 'ArrowLeft':  selectCell(selR, selC - 1); e.preventDefault(); break;
+      case 'ArrowDown':  selectCell(selR + 1, selC); e.preventDefault(); break;
+      case 'ArrowUp':    selectCell(selR - 1, selC); e.preventDefault(); break;
+    }
+  });
+
+  buildGrid();
+  updateCode();
+</script>
+
+</body>
+</html>

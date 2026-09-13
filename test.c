@@ -76,19 +76,19 @@ int main(void)
         {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
         {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0
     };
-    int archerCount = 3; // was 1 -- all 3 archers[] entries are now real, level-gated enemies
+    int archerCount = 0; // was 1 -- all 3 archers[] entries are now real, level-gated enemies
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[1] = {
         {1000.0f, 1800.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- boss room
         // x       y       health damage atktimer maxatktimer alive knockbackduration playerecoil recoildirection level
     };
-    int totemCount = 1;
+    int totemCount = 0;
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 3; // was 1 -- all 3 mimics[] entries are now real, level-gated enemies
+    int mimicCount = 0; // was 1 -- all 3 mimics[] entries are now real, level-gated enemies
     int mimicattaks[mimicCount];
-    int bullCount = 3; // was 1 -- all 3 bulls[] entries are now real, level-gated enemies
+    int bullCount = 0; // was 1 -- all 3 bulls[] entries are now real, level-gated enemies
 
     Dragon dragon = {
         1500.0f, // x
@@ -271,7 +271,7 @@ int main(void)
     // attackcooldown value, so the swing sprite reads fast/punchy regardless of how long the
     // cooldown before the next attack actually is.
     float attackAnimTimer = 0.0f;
-    const float ATTACK_ANIM_DURATION = .08f; // total time to play through all 3 attack frames; lower = snappier
+    const float ATTACK_ANIM_DURATION = .1f; // total time to play through all 3 attack frames; lower = snappier
     int attackDirection = 1;                // facing direction locked in at the moment the attack starts; used for AttackRect sprite flip only
     bool attackIsUpAttack = false;          // whether the current swing is the up-attack, locked in at the moment the attack starts
     int currentDashFrame = 0;
