@@ -397,8 +397,8 @@ int currentTotemFrame = 0;
                 state = Playing;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText("LDF PRESENTS", screen_w / 2 - 500, screen_h/ 2, 100, RED);
-            DrawText("UNTITLED DUNGEON CRAWLER", screen_w / 2 - 300, screen_h/ 2-200, 100, RED);
+            DrawText("LDF PRESENTS", screen_w / 2 - 400, screen_h/ 2-300, 100, RED);
+            DrawText("UNTITLED DUNGEON CRAWLER", screen_w / 2-750, screen_h/ 2+100, 100, RED);
             EndDrawing();
         }
         if (state == Pausemenu)
