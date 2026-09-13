@@ -7,6 +7,8 @@
 
 void MimicCollisionX(Mimic *M)
 {
+    if (M->level != currentLevel)
+        return;
     int tileX = (int)(M->x / TILE_SIZE);
     int tileY = (int)(M->y / TILE_SIZE);
 
@@ -36,6 +38,8 @@ void MimicCollisionX(Mimic *M)
 
 void MimicCollisionY(Mimic *M)
 {
+    if (M->level != currentLevel)
+        return;
     int tileX = (int)(M->x / TILE_SIZE);
     int tileY = (int)(M->y / TILE_SIZE);
 
@@ -72,6 +76,8 @@ void MimicCollisionY(Mimic *M)
 
 void UpdateMimicGravity(Mimic *M, float dt)
 {
+    if (M->level != currentLevel)
+        return;
     M->velocityY += M->gravity * dt;
     M->y += M->velocityY * dt;
     M->onground = false; // reset every frame
@@ -81,7 +87,7 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
 {
     if (M->health <= 0)
         M->alive = false;
-    if (M->alive == false)
+    if (M->alive == false || M->level != currentLevel)
         return 0;
     Rectangle mimicrect = {M->x, M->y, 100, 200};
     Rectangle playerrect = {P->x, P->y, 100, 200};
@@ -216,6 +222,8 @@ int UpdateMimicLogic(Mimic *M, Player *P, float dt, int attackcheck, Rectangle *
 
 void ArcherCollisionX(Archer *M)
 {
+    if (M->level != currentLevel)
+        return;
     int tileX = (int)(M->x / TILE_SIZE);
     int tileY = (int)(M->y / TILE_SIZE);
 
@@ -245,6 +253,8 @@ void ArcherCollisionX(Archer *M)
 
 void ArcherCollisionY(Archer *M)
 {
+    if (M->level != currentLevel)
+        return;
     int tileX = (int)(M->x / TILE_SIZE);
     int tileY = (int)(M->y / TILE_SIZE);
 
@@ -281,6 +291,8 @@ void ArcherCollisionY(Archer *M)
 
 void UpdateArcherGravity(Archer *M, float dt)
 {
+    if (M->level != currentLevel)
+        return;
     M->velocityY += M->gravity * dt;
     M->y += M->velocityY * dt;
     M->onground = false; // reset every frame
@@ -290,7 +302,7 @@ int UpdateArcherLogic(Archer *A, Player *P, float dt, int attackcheck, Rectangle
 {
     if (A->health <= 0)
         A->alive = false;
-    if (A->alive == false)
+    if (A->alive == false || A->level != currentLevel)
         return 0;
     Rectangle ArcherRect = {A->x, A->y, 100, 200};
     Rectangle playerrect = {P->x, P->y, 100, 200};
@@ -466,7 +478,7 @@ void UpdateTotemLogic(Totem *T, Player *P, float dt, int attackcheck, Rectangle 
 {
     if (T->health <= 0)
         T->alive = false;
-    if (T->alive == false)
+    if (T->alive == false || T->level != currentLevel)
         return;
 
     Rectangle totemRect = {T->x, T->y, 100, 150};
@@ -519,7 +531,7 @@ void UpdateTotemLogic(Totem *T, Player *P, float dt, int attackcheck, Rectangle 
 
 void TotemCollision(Totem *T, Player *P)
 {
-    if (T->alive == false)
+    if (T->alive == false || T->level != currentLevel)
         return;
 
     Rectangle totemRect = {T->x, T->y, 100, 150};

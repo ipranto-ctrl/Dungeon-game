@@ -9,7 +9,7 @@ float invincibility = .2f;
 
 void spiritupdate(Spirit *en, Player *P, float dt)
 {
-    if (en->alive == false)
+    if (en->alive == false || en->level != currentLevel)
         return;
 
     // phase 1: chasing
@@ -77,7 +77,7 @@ void spiritupdate(Spirit *en, Player *P, float dt)
 
 void BullCollisionX(Bull *B)
 {
-    if (B->alive == false)
+    if (B->alive == false || B->level != currentLevel)
         return;
     int tileX = (int)(B->x / TILE_SIZE);
     int tileY = (int)(B->y / TILE_SIZE);
@@ -116,7 +116,7 @@ void BullCollisionX(Bull *B)
 
 void BullCollisionY(Bull *B)
 {
-    if (B->alive == false)
+    if (B->alive == false || B->level != currentLevel)
         return;
     int tileX = (int)(B->x / TILE_SIZE);
     int tileY = (int)(B->y / TILE_SIZE);
@@ -153,7 +153,7 @@ void BullCollisionY(Bull *B)
 
 void UpdateBullGravity(Bull *B, float dt)
 {
-    if (B->alive == false)
+    if (B->alive == false || B->level != currentLevel)
         return;
     B->velocityY += B->gravity * dt;
     B->y += B->velocityY * dt;
@@ -165,7 +165,7 @@ void BullUpdateLogic(Bull *bn, Player *P, float dt, int AttackCheck, Rectangle *
     {
         bn->alive = false;
     }
-    if (bn->alive == false)
+    if (bn->alive == false || bn->level != currentLevel)
     {
         return;
     }
@@ -290,7 +290,7 @@ void UpdateDragon(Dragon *D, Player *P, float dt, int attackcheck, Rectangle *at
 {
     if (D->health <= 0)
         D->alive = false;
-    if (D->alive == false)
+    if (D->alive == false || D->level != currentLevel)
         return;
     Rectangle dragonrect = {D->x, D->y, 300, 200};
     Rectangle playerrect = {P->x, P->y, 100, 200};
@@ -443,7 +443,7 @@ void UpdateDragon(Dragon *D, Player *P, float dt, int attackcheck, Rectangle *at
 
 void DragonCollisionX(Dragon *D, float dt)
 {
-    if (D->alive == false)
+    if (D->alive == false || D->level != currentLevel)
         return;
     int tileX = (int)(D->x / TILE_SIZE);
     int tileY = (int)(D->y / TILE_SIZE);
@@ -519,7 +519,7 @@ void DragonCollisionX(Dragon *D, float dt)
 }
 void DragonCollisionY(Dragon *D)
 {
-    if (D->alive == false)
+    if (D->alive == false || D->level != currentLevel)
         return;
     int tileX = (int)(D->x / TILE_SIZE);
     int tileY = (int)(D->y / TILE_SIZE);
