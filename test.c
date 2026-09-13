@@ -322,6 +322,15 @@ texTotem[3] = LoadTexture("img/totem4.png");
 float totemAnimTimer = 0.0f;
 int currentTotemFrame = 0;
 
+// --- Load Spike Textures ---
+    Texture2D texSpike[2];
+    texSpike[0] = LoadTexture("img/spike1.png");
+    texSpike[1] = LoadTexture("img/spike2.png");
+
+    // Spike Animation Variables
+    float spikeAnimTimer = 0.0f;
+    int currentSpikeFrame = 0;
+
     // initialing the scrolling camera for the 1st frame
     Camera2D camera = {0};
     camera.target = (Vector2){P.x, P.y};                        // what it looks at
@@ -387,6 +396,13 @@ int currentTotemFrame = 0;
                 {
                     sprintAnimTimer = 0.0f;
                     currentSprintFrame = 0;
+                }
+                // --- Update Spike Animation Timer ---
+                spikeAnimTimer += dt;
+                if (spikeAnimTimer >= 0.03f) // Switch frames every 0.5 seconds
+                {
+                    currentSpikeFrame = (currentSpikeFrame + 1) % 2;
+                    spikeAnimTimer = 0.0f;
                 }
                 // --- Update Archer Animation Timer ---
                 archerAnimTimerWalk += dt;
@@ -999,7 +1015,14 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                         if (maps[currentLevel][i][j] == 1)
                             DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GRAY);
                         if (maps[currentLevel][i][j] == 3)
-                            DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
+                            // DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
+                            // // if (maps[currentLevel][i][j] == 3)
+                        {
+                            Texture2D currentSpikeTex = texSpike[currentSpikeFrame];
+                            Rectangle spikeSrc = { 0.0f, 0.0f, (float)currentSpikeTex.width, (float)currentSpikeTex.height };
+                            Rectangle spikeDest = { (j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE };
+                            DrawTexturePro(currentSpikeTex, spikeSrc, spikeDest, (Vector2){0, 0}, 0.0f, WHITE);
+                        }
                         if (maps[currentLevel][i][j] == 2) // door
                         {
                             if (doorOpen)
@@ -1464,6 +1487,11 @@ for (int i = 0; i < 4; i++)
     UnloadTexture(texTotem[i]);
 }
 
+// --- Unload Spike Textures ---
+    for (int i = 0; i < 2; i++) 
+    {
+        UnloadTexture(texSpike[i]);
+    }
     // --- Unload Pause Menu Texture ---
     UnloadTexture(texPauseMenu);
 
