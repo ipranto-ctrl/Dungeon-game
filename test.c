@@ -392,7 +392,7 @@ int currentTotemFrame = 0;
     Camera2D camera = {0};
     camera.target = (Vector2){P.x, P.y};                        // what it looks at
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
-    camera.zoom = 0.4f;
+    camera.zoom = 0.8f;
 
     while (!WindowShouldClose())
     {
