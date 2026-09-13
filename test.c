@@ -23,16 +23,18 @@ int main(void)
         Mainmenu,
         Playing,
         Pausemenu,
-        Gameover
+        Gameover,
+        Win
     } Gamestate;
     Gamestate state = Mainmenu;
+    Vector2 bootSpawn = GetLevelBottomLeftSpawn(currentLevel); // bottom-left-most safe tile of the boot level
     Player P = {
-        200.0f,       // x
+        bootSpawn.x,  // x
         1200.0f,      // speed
         0.2f,         // dashtimer
         1,            // dashflag
         0.0f,         // dashcooldown
-        3824.0f,       // y
+        bootSpawn.y,   // y
         10000.0f,     // gravity
         0.0f,         // velocityY
         15,           // damage
@@ -93,8 +95,8 @@ int main(void)
     };
     Mimic mimics[6] = {
         {3534.0f, 1720.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 1}, // level 1 -- middle-mid platform, row 15's cols 21-34 segment
-        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0 -- unused for now, mimicCount only spawns mimics[0]
-        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0 -- unused for now, mimicCount only spawns mimics[0]
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, false, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
+        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, false, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         // Level 2, first platform above the base (row 28, cols 12-37 -- the wide
         // floor directly above the ground). Two mimics, kept clear of the wall
         // edges at col 12/37 and the spike at col 20.
@@ -106,8 +108,8 @@ int main(void)
     Archer archers[6] = {
         // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg maxatktimer level
         {3534.0f, 312.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 1}, // level 1 -- top-mid platform, row 4's cols 21-34 segment
-        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- unused for now, archerCount only spawns archers[0]
-        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- unused for now, archerCount only spawns archers[0]
+        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, false, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
+        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, false, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         // Level 2, platform 3 (row 19, cols 14-32 -- immediate platform above
         // platform 2). Placed clear of the wall edges at col 14/32 and the
         // spike at col 17.
@@ -117,19 +119,19 @@ int main(void)
         // Level 2, platform 6 (row 5, cols 11-49 -- the topmost platform in the level).
         {4500.0f, 440.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 2},
     };
-    int archerCount = 6; // loop covers archers[0..5]: index 0 is level 1, indices 1-2 reserved/unused (level 0), indices 3-5 are the new level 2 archers (platforms 3, 5, 6)
+    int archerCount = 6; // loop covers archers[0..5]: index 0 is level 1, indices 1-2 are level-0 archers (now disabled, see alive=false above), indices 3-5 are the level 2 archers (platforms 3, 5, 6)
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[3] = {
         // x       y       health damage atktimer maxatktimer alive knockbackduration playerecoil recoildirection level
-        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 0}, // level 0 -- middle of the map, on the 4-tile solid platform at row 23 cols 19-22 (spike-free; the vertical spike divider sits at col 25)
+        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, false, 0.0f, 0.0f, 0, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         {576.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 2nd platform, the solid block at row 23 cols 1-8, leftward/up from the first platform
         {5300.0f, 1720.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 4th platform, row 15 cols 37-49, immediate upward-right platform from platform 3
     };
-    int totemCount = 3; // 3 totems active: level 0 middle platform, level 2 2nd platform, level 2 4th platform
+    int totemCount = 3; // 3 totems: level 0's totem is disabled (alive=false), level 2 2nd platform, level 2 4th platform
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 6; // loop covers mimics[0..5]: index 0 is level 1 (middle-mid platform), indices 1-2 are reserved/unused (level 0), indices 3-5 are the new level 2 mimics (platforms 1 and 5)
+    int mimicCount = 6; // loop covers mimics[0..5]: index 0 is level 1 (middle-mid platform), indices 1-2 are level-0 mimics (now disabled, see alive=false above), indices 3-5 are the level 2 mimics (platforms 1 and 5)
     int mimicattaks[mimicCount];
     int bullCount = 6; // active: bulls[0..2] (level 1, topmost platform) + bulls[3..5] (level 2, base platform + platform 6)
 
@@ -179,6 +181,9 @@ int main(void)
 
     // Pause Menu texture Load
     Texture2D texPauseMenu = LoadTexture("img/pause_menu.png");
+
+    // Win screen texture Load (shown after clearing the final level's gate)
+    Texture2D texWin = LoadTexture("img/GameOver.png");
 
     // UFO Texture Load
     Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
@@ -530,15 +535,25 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                     gateCooldown -= dt;
                 else if (CheckGateCollision(&P))
                 {
-                    currentLevel = (currentLevel + 1) % LEVEL_COUNT; // wraps back to level 0 after the last one
-                    P.x = levelSpawn[currentLevel].x;
-                    P.y = levelSpawn[currentLevel].y;
-                    P.velocityY = 0.0f;
-                    P.onground = false;
-                    P.doublejump = true;
-                    P.dashing = false;
-                    P.dashtimer = 0.15f;
-                    gateCooldown = 0.5f; // long enough to clear the gate tile before re-checking
+                    if (currentLevel == LEVEL_COUNT - 1)
+                    {
+                        // Gate on the final level -- the run is complete instead
+                        // of looping back to level 0.
+                        state = Win;
+                    }
+                    else
+                    {
+                        currentLevel = (currentLevel + 1) % LEVEL_COUNT;
+                        Vector2 spawn = GetLevelBottomLeftSpawn(currentLevel);
+                        P.x = spawn.x;
+                        P.y = spawn.y;
+                        P.velocityY = 0.0f;
+                        P.onground = false;
+                        P.doublejump = true;
+                        P.dashing = false;
+                        P.dashtimer = 0.15f;
+                        gateCooldown = 0.5f; // long enough to clear the gate tile before re-checking
+                    }
                 }
 
                 AttackCheck = UpdateAttack(&P, dt, &AttackRect);
@@ -1509,105 +1524,144 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                 DrawRectangle(20, 20, 200 * (P.health / P.maxHealth), 20, RED); // foreground — width = maxWidth * (health / maxHealth)
                 EndDrawing();
             }
+        }
 
-            if (state == Gameover)
-
+        // --- FIX: Gameover and Win are now handled as top-level states in the
+        // main loop, siblings of `if (state == Playing)`, instead of being
+        // nested inside it. Previously both were only reachable on the exact
+        // frame the state transition happened (because `if (state == Playing)`
+        // is only evaluated once per frame, at loop-top): the frame gate
+        // changed `state` to Win/Gameover mid-block, that block finished with
+        // one extra draw, and then on every subsequent frame the outer
+        // `if (state == Playing)` was false, so the nested Gameover/Win blocks
+        // -- including their own BeginDrawing/EndDrawing and KEY_ENTER checks
+        // -- became completely unreachable. That left the framebuffer never
+        // swapping again (a frozen screen) and ENTER doing nothing. Moving
+        // them out here means they get polled and drawn every single frame
+        // for as long as `state` holds that value.
+        if (state == Gameover)
+        {
+            if (IsKeyPressed(KEY_ENTER))
             {
-                if (IsKeyPressed(KEY_ENTER))
+                state = Mainmenu; // no type, just assignment
+                currentLevel = 2; // reset to the same level the game boots into
+                Vector2 resetSpawn = GetLevelBottomLeftSpawn(currentLevel);
+                P.x = resetSpawn.x;
+                P.y = resetSpawn.y;
+                P.health = 100.0f;
+                P.velocityY = 0;
+                P.iframes = 0;
+                P.dashing = false;
+                P.onground = true;
+                P.doublejump = true;
+
+                en.alive = true;
+                en.x = 200.0f;
+                en.y = 200.0f;
+                en.spiritcollision = false;
+                en.knockbackduration = 0;
+
+                // Level 2 upper-platform pool -- back to dormant, fresh counts;
+                // the spawner in the main loop brings the first one in.
+                en2.alive = false;
+                en2.spiritcollision = false;
+                en2.knockbackduration = 0;
+                spiritsToSpawn = 3;
+                dragonsToSpawn = 3;
+
+                for (int i = 0; i < mimicCount; i++)
                 {
-                    state = Mainmenu; // no type, just assignment
-                    currentLevel = 2; // reset to the same level the game boots into
-                    P.x = 200.0f;
-                    P.y = 3824.0f;
-                    P.health = 100.0f;
-                    P.velocityY = 0;
-                    P.iframes = 0;
-                    P.dashing = false;
-                    P.onground = true;
-                    P.doublejump = true;
-
-                    en.alive = true;
-                    en.x = 200.0f;
-                    en.y = 200.0f;
-                    en.spiritcollision = false;
-                    en.knockbackduration = 0;
-
-                    // Level 2 upper-platform pool -- back to dormant, fresh counts;
-                    // the spawner in the main loop brings the first one in.
-                    en2.alive = false;
-                    en2.spiritcollision = false;
-                    en2.knockbackduration = 0;
-                    spiritsToSpawn = 3;
-                    dragonsToSpawn = 3;
-
-                    for (int i = 0; i < mimicCount; i++)
-                    {
-                        mimics[i].alive = true;
-                        mimics[i].health = 100.0f;
-                        mimics[i].mstate = MIdle;
-                        mimics[i].playerknockbacktimer = 0;
-                        mimics[i].knockbackduration = 0;
-                        mimicPrevHealth[i] = 100.0f;
-                        mimicHitFlashTimer[i] = 0.0f;
-                        mimicAttackAnimActive[i] = false;
-                        mimicAttackAnimTimer[i] = 0.0f;
-                        mimicParticleTimer[i] = 0.0f;
-                        mimicParticleRect[i] = (Rectangle){0};
-                    }
-
-                    for (int i = 0; i < bullCount; i++)
-                    {
-                        bulls[i].alive = true;
-                        bulls[i].health = 90.0f;
-                        bulls[i].state = Idle;
-                        bulls[i].speed = 100.0f;
-                        bullPrevHealth[i] = 90.0f;
-                        bullHitFlashTimer[i] = 0.0f;
-                    }
-                    for (int i = 0; i < archerCount; i++)
-                    {
-                        archers[i].alive = true;
-                        archers[i].health = 80.0f;
-                        archers[i].Astate = AIdle;
-                        archers[i].attacktimer = 2.0f;
-                        archerPrevHealth[i] = 80.0f;
-                        archerHitFlashTimer[i] = 0.0f;
-                    }
-                    for (int i = 0; i < MAX_ARROWS; i++)
-                        arrows[i].alive = false;
-
-                    dragon.alive = false;
-                    dragon.health = 50.0f;
-                    dragon.dstate = Didle;
-                    dragon.x = 1500.0f;
-                    dragon.y = 500.0f;
-                    dragon.wallDropSpeed = 0;
-                    dragon.playerknockbacktimer = 0;
-                    dragon.playerecoil = 0;
-                    dragonPrevHealth = 50.0f;
-                    dragonHitFlashTimer = 0.0f;
-
-                    for (int i = 0; i < totemCount; i++)
-                    {
-                        totems[i].alive = true;
-                        totems[i].health = 60.0f;
-                        totems[i].attacktimer = totems[i].maxattacktimer;
-                        totems[i].knockbackduration = 0;
-                        totemPrevHealth[i] = 60.0f;
-                        totemHitFlashTimer[i] = 0.0f;
-                    }
-                    for (int i = 0; i < MAX_HOMING_BULLETS; i++)
-                        homingBullets[i].alive = false;
+                    mimics[i].alive = true;
+                    mimics[i].health = 100.0f;
+                    mimics[i].mstate = MIdle;
+                    mimics[i].playerknockbacktimer = 0;
+                    mimics[i].knockbackduration = 0;
+                    mimicPrevHealth[i] = 100.0f;
+                    mimicHitFlashTimer[i] = 0.0f;
+                    mimicAttackAnimActive[i] = false;
+                    mimicAttackAnimTimer[i] = 0.0f;
+                    mimicParticleTimer[i] = 0.0f;
+                    mimicParticleRect[i] = (Rectangle){0};
                 }
-                BeginDrawing();
-                ClearBackground(BLACK);
-                DrawText("GAME OVER", screen_w / 2 - 150, screen_h / 2, 50, RED);
-                DrawText("Press ENTER to restart", screen_w / 2 - 150, screen_h / 2 + 60, 30, WHITE);
-                EndDrawing();
+
+                for (int i = 0; i < bullCount; i++)
+                {
+                    bulls[i].alive = true;
+                    bulls[i].health = 90.0f;
+                    bulls[i].state = Idle;
+                    bulls[i].speed = 100.0f;
+                    bullPrevHealth[i] = 90.0f;
+                    bullHitFlashTimer[i] = 0.0f;
+                }
+                for (int i = 0; i < archerCount; i++)
+                {
+                    archers[i].alive = true;
+                    archers[i].health = 80.0f;
+                    archers[i].Astate = AIdle;
+                    archers[i].attacktimer = 2.0f;
+                    archerPrevHealth[i] = 80.0f;
+                    archerHitFlashTimer[i] = 0.0f;
+                }
+                for (int i = 0; i < MAX_ARROWS; i++)
+                    arrows[i].alive = false;
+
+                dragon.alive = false;
+                dragon.health = 50.0f;
+                dragon.dstate = Didle;
+                dragon.x = 1500.0f;
+                dragon.y = 500.0f;
+                dragon.wallDropSpeed = 0;
+                dragon.playerknockbacktimer = 0;
+                dragon.playerecoil = 0;
+                dragonPrevHealth = 50.0f;
+                dragonHitFlashTimer = 0.0f;
+
+                for (int i = 0; i < totemCount; i++)
+                {
+                    totems[i].alive = true;
+                    totems[i].health = 60.0f;
+                    totems[i].attacktimer = totems[i].maxattacktimer;
+                    totems[i].knockbackduration = 0;
+                    totemPrevHealth[i] = 60.0f;
+                    totemHitFlashTimer[i] = 0.0f;
+                }
+                for (int i = 0; i < MAX_HOMING_BULLETS; i++)
+                    homingBullets[i].alive = false;
+            }
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawText("GAME OVER", screen_w / 2 - 150, screen_h / 2, 50, RED);
+            DrawText("Press ENTER to restart", screen_w / 2 - 150, screen_h / 2 + 60, 30, WHITE);
+            EndDrawing();
+        }
+
+        if (state == Win)
+        {
+            BeginDrawing();
+            ClearBackground(BLACK);
+            Rectangle winSrc  = {0, 0, (float)texWin.width, (float)texWin.height};
+            Rectangle winDest = {0, 0, (float)screen_w, (float)screen_h};
+            DrawTexturePro(texWin, winSrc, winDest, (Vector2){0, 0}, 0.0f, WHITE);
+            EndDrawing();
+
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                // Run complete -- close the game instead of looping back
+                // to the main menu.
+                //
+                // Must drop out of exclusive fullscreen and restore the
+                // cursor before CloseWindow(), otherwise some
+                // drivers/OSes fail to release the display and the
+                // whole screen locks up instead of just closing.
+                if (IsWindowFullscreen())
+                    ToggleFullscreen();
+                ShowCursor();
+                goto shutdown;
             }
         }
         // --- NEW: Unload textures before closing ---
     }
+shutdown:
     UnloadTexture(texIdle);
     for (int i = 0; i < 4; i++)
         UnloadTexture(texSprint[i]);
@@ -1668,6 +1722,9 @@ for (int i = 0; i < 4; i++)
     }
     // --- Unload Pause Menu Texture ---
     UnloadTexture(texPauseMenu);
+
+    // --- Unload Win Screen Texture ---
+    UnloadTexture(texWin);
 
     CloseWindow();
     return 0;
