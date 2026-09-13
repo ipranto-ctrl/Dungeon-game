@@ -27,13 +27,14 @@ int main(void)
         Win
     } Gamestate;
     Gamestate state = Mainmenu;
+    Vector2 bootSpawn = GetLevelBottomLeftSpawn(currentLevel); // bottom-left-most safe tile of the boot level
     Player P = {
-        200.0f,       // x
+        bootSpawn.x,  // x
         1200.0f,      // speed
         0.2f,         // dashtimer
         1,            // dashflag
         0.0f,         // dashcooldown
-        3824.0f,       // y
+        bootSpawn.y,   // y
         10000.0f,     // gravity
         0.0f,         // velocityY
         15,           // damage
@@ -94,8 +95,8 @@ int main(void)
     };
     Mimic mimics[6] = {
         {3534.0f, 1720.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 1}, // level 1 -- middle-mid platform, row 15's cols 21-34 segment
-        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0 -- unused for now, mimicCount only spawns mimics[0]
-        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0 -- unused for now, mimicCount only spawns mimics[0]
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, false, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
+        {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, false, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         // Level 2, first platform above the base (row 28, cols 12-37 -- the wide
         // floor directly above the ground). Two mimics, kept clear of the wall
         // edges at col 12/37 and the spike at col 20.
@@ -107,8 +108,8 @@ int main(void)
     Archer archers[6] = {
         // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg maxatktimer level
         {3534.0f, 312.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 1}, // level 1 -- top-mid platform, row 4's cols 21-34 segment
-        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- unused for now, archerCount only spawns archers[0]
-        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- unused for now, archerCount only spawns archers[0]
+        {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, false, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
+        {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, false, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         // Level 2, platform 3 (row 19, cols 14-32 -- immediate platform above
         // platform 2). Placed clear of the wall edges at col 14/32 and the
         // spike at col 17.
@@ -118,19 +119,19 @@ int main(void)
         // Level 2, platform 6 (row 5, cols 11-49 -- the topmost platform in the level).
         {4500.0f, 440.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 2},
     };
-    int archerCount = 6; // loop covers archers[0..5]: index 0 is level 1, indices 1-2 reserved/unused (level 0), indices 3-5 are the new level 2 archers (platforms 3, 5, 6)
+    int archerCount = 6; // loop covers archers[0..5]: index 0 is level 1, indices 1-2 are level-0 archers (now disabled, see alive=false above), indices 3-5 are the level 2 archers (platforms 3, 5, 6)
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[3] = {
         // x       y       health damage atktimer maxatktimer alive knockbackduration playerecoil recoildirection level
-        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 0}, // level 0 -- middle of the map, on the 4-tile solid platform at row 23 cols 19-22 (spike-free; the vertical spike divider sits at col 25)
+        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, false, 0.0f, 0.0f, 0, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         {576.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 2nd platform, the solid block at row 23 cols 1-8, leftward/up from the first platform
         {5300.0f, 1720.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 4th platform, row 15 cols 37-49, immediate upward-right platform from platform 3
     };
-    int totemCount = 3; // 3 totems active: level 0 middle platform, level 2 2nd platform, level 2 4th platform
+    int totemCount = 3; // 3 totems: level 0's totem is disabled (alive=false), level 2 2nd platform, level 2 4th platform
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
-    int mimicCount = 6; // loop covers mimics[0..5]: index 0 is level 1 (middle-mid platform), indices 1-2 are reserved/unused (level 0), indices 3-5 are the new level 2 mimics (platforms 1 and 5)
+    int mimicCount = 6; // loop covers mimics[0..5]: index 0 is level 1 (middle-mid platform), indices 1-2 are level-0 mimics (now disabled, see alive=false above), indices 3-5 are the level 2 mimics (platforms 1 and 5)
     int mimicattaks[mimicCount];
     int bullCount = 6; // active: bulls[0..2] (level 1, topmost platform) + bulls[3..5] (level 2, base platform + platform 6)
 
@@ -543,8 +544,9 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                     else
                     {
                         currentLevel = (currentLevel + 1) % LEVEL_COUNT;
-                        P.x = levelSpawn[currentLevel].x;
-                        P.y = levelSpawn[currentLevel].y;
+                        Vector2 spawn = GetLevelBottomLeftSpawn(currentLevel);
+                        P.x = spawn.x;
+                        P.y = spawn.y;
                         P.velocityY = 0.0f;
                         P.onground = false;
                         P.doublejump = true;
@@ -1543,8 +1545,9 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
             {
                 state = Mainmenu; // no type, just assignment
                 currentLevel = 2; // reset to the same level the game boots into
-                P.x = 200.0f;
-                P.y = 3824.0f;
+                Vector2 resetSpawn = GetLevelBottomLeftSpawn(currentLevel);
+                P.x = resetSpawn.x;
+                P.y = resetSpawn.y;
                 P.health = 100.0f;
                 P.velocityY = 0;
                 P.iframes = 0;
