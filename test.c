@@ -311,6 +311,16 @@ int main(void)
     float archerSpawnTimer[3] = {0.0f, 0.0f, 0.0f}; 
     float archerPrevAttackTimer[3] = {archers[0].attacktimer, archers[1].attacktimer, archers[2].attacktimer};
     float archerPrevX[3] = {archers[0].x, archers[1].x, archers[2].x};
+    // --- Load Totem Textures ---
+Texture2D texTotem[4];
+texTotem[0] = LoadTexture("img/totem1.png");
+texTotem[1] = LoadTexture("img/totem2.png");
+texTotem[2] = LoadTexture("img/totem3.png");
+texTotem[3] = LoadTexture("img/totem4.png");
+
+// Totem Animation Variables
+float totemAnimTimer = 0.0f;
+int currentTotemFrame = 0;
 
     // initialing the scrolling camera for the 1st frame
     Camera2D camera = {0};
@@ -405,7 +415,13 @@ int main(void)
                 // Separate continuous accumulator (never resets) for the bob/lean offset below,
                 // so that motion stays smooth regardless of the 2-frame swap timing above.
                 mimicWalkCycleTimer += dt;
-
+                // --- Update Totem Animation Timer ---
+totemAnimTimer += dt;
+if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
+{
+    currentTotemFrame = (currentTotemFrame + 1) % 4;
+    totemAnimTimer = 0.0f;
+}
                 UpdateSpikeKnockback(&P, dt);
 
                 bool wasDashing = P.dashing;
@@ -1209,8 +1225,39 @@ int main(void)
                 }
                 for (int i = 0; i < totemCount; i++)
                 {
-                    if (totems[i].alive && totems[i].level == currentLevel)
-                        DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE);
+                    if (totems[i].alive)
+                        // DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE);
+                        for (int i = 0; i < totemCount; i++)
+{
+    if (totems[i].alive)
+    {
+        // DrawRectangle(totems[i].x, totems[i].y, 100, 150, (totemHitFlashTimer[i] > 0.0f) ? RED : DARKPURPLE); // Old placeholder
+
+        Texture2D currentTotemTex = texTotem[currentTotemFrame];
+        Rectangle sourceRec = {0.0f, 0.0f, (float)currentTotemTex.width, (float)currentTotemTex.height};
+
+        // Scale based on the 150px tall hitbox height to maintain native aspect ratio
+        float totemAspect = (float)currentTotemTex.width / (float)currentTotemTex.height;
+        float totemDrawHeight = 350.0f; // Set this higher if your sprite should be larger than the hitbox
+        float totemDrawWidth = totemAspect * totemDrawHeight;
+
+        // Center horizontally over the 100px width hitbox and align feet to the bottom
+        float offsetX = (totemDrawWidth - 100.0f) / 2.0f;
+        float offsetY = totemDrawHeight - 150.0f; 
+
+        Rectangle destRec = {
+            totems[i].x - offsetX,
+            totems[i].y - offsetY,
+            totemDrawWidth,
+            totemDrawHeight
+        };
+
+        // Retain the red damage flash logic
+        Color totemTint = (totemHitFlashTimer[i] > 0.0f) ? RED : WHITE;
+        
+        DrawTexturePro(currentTotemTex, sourceRec, destRec, (Vector2){0,0}, 0.0f, totemTint);
+    }
+}
                 }
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
                 {
@@ -1411,6 +1458,11 @@ int main(void)
     for (int i = 0; i < 4; i++) UnloadTexture(texArcherAttack[i]);
     for (int i = 0; i < 2; i++) UnloadTexture(texArcherSpawn[i]);
     UnloadTexture(texCake);
+    // --- Unload Totem Textures ---
+for (int i = 0; i < 4; i++) 
+{
+    UnloadTexture(texTotem[i]);
+}
 
     // --- Unload Pause Menu Texture ---
     UnloadTexture(texPauseMenu);
