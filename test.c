@@ -75,7 +75,7 @@ int main(void)
         {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
         {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f},
     };
-    int archerCount = 0;
+    int archerCount = 2;
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[1] = {
