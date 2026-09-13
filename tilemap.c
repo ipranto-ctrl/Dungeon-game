@@ -1,17 +1,8 @@
 #include "tilemap.h"
 
-int currentLevel = 2;
+int currentLevel = 0;
 bool doorOpen = true; // gate is always open -- see comment in tilemap.h
 
-// Spawn point used when the player enters this level through a gate.
-// x=300 is clear of every level's interior walls/spikes; y=200 is high
-// enough up that the player always falls onto the floor rather than into
-// it, same as the initial spawn set in test.c.
-Vector2 levelSpawn[LEVEL_COUNT] = {
-    {300.0f, 200.0f}, // entering level 0
-    {300.0f, 200.0f}, // entering level 1
-    {300.0f, 200.0f}, // entering level 2 (boss room)
-};
 // 0 = empty, 1 = solid, 2 = door (opens when all enemies dead)
 int maps[3][MAP_ROWS][MAP_COLS] = {
     {
@@ -47,7 +38,7 @@ int maps[3][MAP_ROWS][MAP_COLS] = {
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1},
-        {1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1},
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     },
    {
@@ -125,3 +116,37 @@ int maps[3][MAP_ROWS][MAP_COLS] = {
     },
 };
 // never add a spike next to the wall border
+
+// See tilemap.h for the rationale. We walk columns left-to-right (skipping
+// the border column) and, within each column, walk rows bottom-to-top
+// (skipping the border row), looking for a tile that is:
+//   - open (walkable),
+//   - has open space directly above it (so the player's ~1.5-tile-tall
+//     hitbox actually fits without spawning inside a wall), and
+//   - has solid ground (tile 1) directly below it -- specifically NOT a
+//     spike (tile 3), so we never spawn the player standing on a hazard.
+// The first column that has any such tile gives us the bottom-left-most
+// safe spot in the level. The player is placed with feet resting exactly
+// on that floor tile; CollisionY will keep them there on the very first
+// frame the same way it does during normal play.
+Vector2 GetLevelBottomLeftSpawn(int level)
+{
+    for (int col = 1; col < MAP_COLS - 1; col++)
+    {
+        for (int row = MAP_ROWS - 2; row >= 1; row--)
+        {
+            int tile = maps[level][row][col];
+            int above = maps[level][row - 1][col];
+            int below = maps[level][row + 1][col];
+            if (tile == 0 && above == 0 && below == 1)
+            {
+                float x = col * TILE_SIZE + (TILE_SIZE - 100) / 2.0f; // centered in the tile (player hitbox is 100 wide)
+                float y = row * TILE_SIZE - 200.0f;                   // feet (y + 200) land exactly on the floor tile
+                return (Vector2){x, y};
+            }
+        }
+    }
+    // Fallback if a level somehow has no valid floor tile (shouldn't happen
+    // for a well-formed level) -- same as the old hardcoded default.
+    return (Vector2){300.0f, 200.0f};
+}

@@ -19,11 +19,13 @@ extern int currentLevel;
 // renderer already branch on it, in case a closable gate comes back later.
 extern bool doorOpen;
 
-// Where the player is placed after walking through the gate into a given
-// level. Index with the level being ENTERED (i.e. levelSpawn[currentLevel]
-// after currentLevel has already been advanced). These just drop the player
-// into open air near the top of the arena and let gravity/CollisionY settle
-// them onto the floor -- tune per level once the real layouts are finalized.
-extern Vector2 levelSpawn[LEVEL_COUNT];
+// Computes where the player should appear when entering `level` (whether
+// via a gate or a fresh game start). Scans the tilemap for the bottom-left-
+// most tile that is open, has open space above it (so the player fits),
+// and has solid ground directly beneath it (not a spike) -- i.e. the
+// bottom-left-most safe standing tile in the level. This replaces the old
+// hardcoded per-level spawn points, which were eyeballed and ended up
+// placing the player in the top-left corner instead of the bottom-left.
+Vector2 GetLevelBottomLeftSpawn(int level);
 
 #endif
