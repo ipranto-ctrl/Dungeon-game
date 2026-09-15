@@ -1,6 +1,6 @@
 #include "tilemap.h"
 
-int currentLevel = 2;
+int currentLevel = 0;
 bool doorOpen = true; // gate is always open -- see comment in tilemap.h
 
 // 0 = empty, 1 = solid, 2 = door (opens when all enemies dead)
