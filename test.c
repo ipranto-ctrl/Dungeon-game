@@ -39,8 +39,8 @@ int main(void)
         0.0f,        // velocityY
         15,          // damage
         0.0f,        // attackcooldown
-        1000.0f,      // health
-        1000.0f,      // maxhealth
+        100000000.0f,      // health
+        100000000.0f,      // maxhealth
         .5f,         // iframes
         true,        // onground
         true,        // doublejump
@@ -187,7 +187,16 @@ int main(void)
 
     // UFO Texture Load
     Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
+    // Level Background Textures (one per level, indexed by currentLevel)
+Texture2D texLevelBG[3];
+texLevelBG[0] = LoadTexture("img/level0bg.png"); // 1248x848
+texLevelBG[1] = LoadTexture("img/level1bg.png"); // 1521x1034
+texLevelBG[2] = LoadTexture("img/level2bg.png"); // 1521x1034
 
+Texture2D texTile[3];
+    texTile[0] = LoadTexture("img/level0tile.png"); 
+    texTile[1] = LoadTexture("img/level1tile.png"); 
+    texTile[2] = LoadTexture("img/level2tile.png");
     SetExitKey(KEY_DELETE);
     HideCursor();
     ToggleFullscreen();
@@ -766,6 +775,13 @@ int main(void)
                 BeginDrawing();
                 ClearBackground(BLACK);
                 BeginMode2D(camera);
+                // --- Draw level background (world-space, so it pans/zooms with camera) ---
+{
+    Texture2D bgTex = texLevelBG[currentLevel];
+    Rectangle bgSrc = {0.0f, 0.0f, (float)bgTex.width, (float)bgTex.height};
+    Rectangle bgDest = {0.0f, 0.0f, (float)(MAP_COLS * TILE_SIZE), (float)(MAP_ROWS * TILE_SIZE)};
+    DrawTexturePro(bgTex, bgSrc, bgDest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+}
                 // --- NEW: Determine which texture to draw ---
                 Texture2D currentTex = texIdle;
 
@@ -1198,7 +1214,24 @@ int main(void)
                     for (int j = 0; j < MAP_COLS; j++)
                     {
                         if (maps[currentLevel][i][j] == 1)
-                            DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GRAY);
+                        {
+                            // Check if the current tile is on the extreme edges of the map
+                            bool isBorder = (i == 0 || i == MAP_ROWS - 1 || j == 0 || j == MAP_COLS - 1);
+
+                            if (isBorder)
+                            {
+                                // Draw solid black for the borders
+                                DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, BLACK);
+                            }
+                            else
+                            {
+                                // Draw the resized level texture for inner platforms
+                                Texture2D currentTileTex = texTile[currentLevel];
+                                Rectangle tileSrc = {0.0f, 0.0f, (float)currentTileTex.width, (float)currentTileTex.height};
+                                Rectangle tileDest = {(float)(j * TILE_SIZE), (float)(i * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
+                                DrawTexturePro(currentTileTex, tileSrc, tileDest, (Vector2){0, 0}, 0.0f, WHITE);
+                            }
+                        }
                         if (maps[currentLevel][i][j] == 3)
                         // DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
                         // // if (maps[currentLevel][i][j] == 3)
@@ -1661,6 +1694,13 @@ int main(void)
         // --- NEW: Unload textures before closing ---
     }
 shutdown:
+// --- Unload Level Background Textures ---
+// --- Unload Level Background & Tile Textures ---
+for (int i = 0; i < 3; i++)
+{
+    UnloadTexture(texLevelBG[i]);
+    UnloadTexture(texTile[i]); // NEW: Unload tile textures
+}
     UnloadTexture(texIdle);
     for (int i = 0; i < 4; i++)
         UnloadTexture(texSprint[i]);
