@@ -29,25 +29,25 @@ int main(void)
     Gamestate state = Mainmenu;
     Vector2 bootSpawn = GetLevelBottomLeftSpawn(currentLevel); // bottom-left-most safe tile of the boot level
     Player P = {
-        bootSpawn.x,  // x
-        1200.0f,      // speed
-        0.2f,         // dashtimer
-        1,            // dashflag
-        0.0f,         // dashcooldown
-        bootSpawn.y,   // y
-        10000.0f,     // gravity
-        0.0f,         // velocityY
-        15,           // damage
-        0.0f,         // attackcooldown
-        100000000.0f, // health
-        100.0f,       // maxhealth
-        .5f,          // iframes
-        true,         // onground
-        true,         // doublejump
-        false,        // dashing
-        true,         // alive
-        0.0f,         // spikeknkbacktimer
-        0             // spikeknkdirection
+        bootSpawn.x, // x
+        1200.0f,     // speed
+        0.2f,        // dashtimer
+        1,           // dashflag
+        0.0f,        // dashcooldown
+        bootSpawn.y, // y
+        10000.0f,    // gravity
+        0.0f,        // velocityY
+        15,          // damage
+        0.0f,        // attackcooldown
+        1000.0f,      // health
+        1000.0f,      // maxhealth
+        .5f,         // iframes
+        true,        // onground
+        true,        // doublejump
+        false,       // dashing
+        true,        // alive
+        0.0f,        // spikeknkbacktimer
+        0            // spikeknkdirection
     };
     Spirit en = {
         200.0f, // x
@@ -88,26 +88,26 @@ int main(void)
         // Level 2, base/bottom platform (row 33 -- the map's floor, spanning almost
         // the whole width with nothing in the way). Two bulls patrolling the ground
         // near where the player spawns.
-        {1000.0f, 4024.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2}, // base platform, left-of-center
+        {1000.0f, 4024.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2},  // base platform, left-of-center
         {3200.0f, 4024.0f, 100.0f, 2000.0f, 3500.0f, 90.0f, 20.0f, -1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2}, // base platform, further right
         // Level 2, platform 6 (row 5, cols 11-49 -- the topmost platform in the level).
         {2000.0f, 440.0f, 100.0f, 2500.0f, 3500.0f, 90.0f, 20.0f, 1, 15000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1, 1, Idle, true, 1.0f, 2},
     };
     Mimic mimics[6] = {
-        {3534.0f, 1720.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 1}, // level 1 -- middle-mid platform, row 15's cols 21-34 segment
-        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, false, {0}, false, 0.0f, 0.0f, 800.0f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
+        {3534.0f, 1720.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 1},  // level 1 -- middle-mid platform, row 15's cols 21-34 segment
+        {900.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, false, {0}, false, 0.0f, 0.0f, 800.0f, 0},  // level 0 -- disabled, user wants only the 3 bulls on level 0
         {1200.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, false, {0}, false, 0.0f, 0.0f, 1200.0f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         // Level 2, first platform above the base (row 28, cols 12-37 -- the wide
         // floor directly above the ground). Two mimics, kept clear of the wall
         // edges at col 12/37 and the spike at col 20.
-        {1800.0f, 3384.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2}, // left of the spike
+        {1800.0f, 3384.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, 1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2},  // left of the spike
         {3400.0f, 3384.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2}, // right of the spike
         // Level 2, platform 5 (row 11, cols 11-31 -- immediate upward-left platform from platform 4).
         {3200.0f, 1208.0f, 0.0f, 10000.0f, 0.0f, 100.0f, 15.0f, 0.0f, 1.0f, 0.0f, -1, MIdle, true, {0}, false, 0.0f, 0.0f, 1200.0f, 2},
     };
     Archer archers[6] = {
         // x       y       velY  grav      spd  hp    dmg  atktimer jmptimer  dir  state  alive  onground  pKBtimer  KBdur  maxspd  arrowdmg maxatktimer level
-        {3534.0f, 312.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 1}, // level 1 -- top-mid platform, row 4's cols 21-34 segment
+        {3534.0f, 312.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 1},   // level 1 -- top-mid platform, row 4's cols 21-34 segment
         {800.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, false, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         {1400.0f, 1800.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, 1, AIdle, false, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
         // Level 2, platform 3 (row 19, cols 14-32 -- immediate platform above
@@ -119,16 +119,16 @@ int main(void)
         // Level 2, platform 6 (row 5, cols 11-49 -- the topmost platform in the level).
         {4500.0f, 440.0f, 0.0f, 10000.0f, 0.0f, 80.0f, 10.0f, 2.0f, 0.0f, -1, AIdle, true, false, 0.0f, 0.0f, 400.0f, 15.0f, 1.5f, 2},
     };
-    int archerCount = 6; // loop covers archers[0..5]: index 0 is level 1, indices 1-2 are level-0 archers (now disabled, see alive=false above), indices 3-5 are the level 2 archers (platforms 3, 5, 6)
+    int archerCount = 6;            // loop covers archers[0..5]: index 0 is level 1, indices 1-2 are level-0 archers (now disabled, see alive=false above), indices 3-5 are the level 2 archers (platforms 3, 5, 6)
     Arrow arrows[MAX_ARROWS] = {0}; // zero-init means all alive=false
 
     Totem totems[3] = {
         // x       y       health damage atktimer maxatktimer alive knockbackduration playerecoil recoildirection level
-        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, false, 0.0f, 0.0f, 0, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
-        {576.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 2nd platform, the solid block at row 23 cols 1-8, leftward/up from the first platform
+        {2688.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 0}, // level 0 -- disabled, user wants only the 3 bulls on level 0
+        {576.0f, 2744.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2},  // level 2 -- 2nd platform, the solid block at row 23 cols 1-8, leftward/up from the first platform
         {5300.0f, 1720.0f, 60.0f, 10.0f, 5.0f, 1.5f, true, 0.0f, 0.0f, 0, 2}, // level 2 -- 4th platform, row 15 cols 37-49, immediate upward-right platform from platform 3
     };
-    int totemCount = 3; // 3 totems: level 0's totem is disabled (alive=false), level 2 2nd platform, level 2 4th platform
+    int totemCount = 3;                                   // 3 totems: level 0's totem is disabled (alive=false), level 2 2nd platform, level 2 4th platform
     HomingBullet homingBullets[MAX_HOMING_BULLETS] = {0}; // zero-init means all alive=false
 
     int mimicCount = 6; // loop covers mimics[0..5]: index 0 is level 1 (middle-mid platform), indices 1-2 are level-0 mimics (now disabled, see alive=false above), indices 3-5 are the level 2 mimics (platforms 1 and 5)
@@ -144,7 +144,7 @@ int main(void)
         1.0f,    // maxchargetimer
         0.0f,    // attacktimer
         3.0f,    // maxattacktimer
-        false,    // alive
+        false,   // alive
         1,       // direction
         Didle,   // dstate
         {0},     // firerect
@@ -195,7 +195,7 @@ int main(void)
     int screen_w = GetScreenWidth();
     SetTargetFPS(60);
 
-    // --- NEW: Load Textures ---
+    // Load Textures
     Texture2D texIdle = LoadTexture("img/idle_right.png");
     Texture2D texSprint[4];
     texSprint[0] = LoadTexture("goth girl/right/right_sprint1.png");
@@ -227,7 +227,7 @@ int main(void)
     texDash[1] = LoadTexture("goth girl/right/dash2.png"); // tucked burst, mid-dash
     texDash[2] = LoadTexture("goth girl/right/dash3.png"); // full speed streak
 
-    // --- Load Bull Textures ---
+    // Bull Textures
     Texture2D texBullIdle = LoadTexture("img/bullidle.png");
 
     Texture2D texBullRun[4];
@@ -245,7 +245,7 @@ int main(void)
     int currentBullRunFrame = 0;
     int currentBullStopFrame = 0;
 
-    // --- Load Mimic Textures ---
+    // Load Mimic Textures
     Texture2D texMimicIdle = LoadTexture("img/mimicidle.png");
 
     Texture2D texMimicRun[2];
@@ -274,7 +274,7 @@ int main(void)
     // Per-mimic attack animation timers (resized to 6 to match the mimics[6] array elsewhere)
     float mimicAttackAnimTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     bool mimicAttackAnimActive[6] = {false, false, false, false, false, false}; // latched separately from mimicattaks[i], which may only pulse true for a single frame
-    const float MIMIC_ATTACK_ANIM_DURATION = 0.4f;         // total time to play through both attack frames -- bumped up so the swing is actually visible
+    const float MIMIC_ATTACK_ANIM_DURATION = 0.4f;                              // total time to play through both attack frames -- bumped up so the swing is actually visible
 
     // Per-mimic attack-impact particle burst -- fires on the falling edge of
     // mimicAttackAnimActive[i] (i.e. once the swing finishes), at wherever
@@ -312,7 +312,7 @@ int main(void)
     float dragonHitFlashTimer = 0.0f;
     const float DRAGON_HIT_FLASH_DURATION = 0.15f;
 
-    // --- NEW: Animation Variables ---
+    // Animation Variables
     float sprintAnimTimer = 0.0f;
     int currentSprintFrame = 0;
     float doubleJumpFlashTimer = 0.0f;
@@ -341,19 +341,19 @@ int main(void)
     // fire again the instant they land at the new level's spawn point).
     float gateCooldown = 0.0f;
 
-    // --- Load Archer Textures ---
+    // Archer Textures
     Texture2D texArcherIdle = LoadTexture("img/oldidle.png");
-    
+
     Texture2D texArcherWalk[2];
     texArcherWalk[0] = LoadTexture("img/oldwalk1.png");
     texArcherWalk[1] = LoadTexture("img/oldwalk2.png");
-    
+
     Texture2D texArcherAttack[4];
     texArcherAttack[0] = LoadTexture("img/oldthrow1.png");
     texArcherAttack[1] = LoadTexture("img/oldthrow2.png");
     texArcherAttack[2] = LoadTexture("img/oldthrow3.png");
     texArcherAttack[3] = LoadTexture("img/oldthrow4.png");
-    
+
     Texture2D texArcherSpawn[2]; // Used as the reload/respawn arrow animation
     texArcherSpawn[0] = LoadTexture("img/oldspawn1.png");
     texArcherSpawn[1] = LoadTexture("img/oldspawn2.png");
@@ -363,23 +363,23 @@ int main(void)
     // Archer Animation Variables
     float archerAnimTimerWalk = 0.0f;
     int currentArcherWalkFrame = 0;
-    
+
     // Per-archer visual state tracking
     float archerSpawnTimer[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     float archerPrevAttackTimer[6] = {archers[0].attacktimer, archers[1].attacktimer, archers[2].attacktimer, archers[3].attacktimer, archers[4].attacktimer, archers[5].attacktimer};
     float archerPrevX[6] = {archers[0].x, archers[1].x, archers[2].x, archers[3].x, archers[4].x, archers[5].x};
     // --- Load Totem Textures ---
-Texture2D texTotem[4];
-texTotem[0] = LoadTexture("img/totem1.png");
-texTotem[1] = LoadTexture("img/totem2.png");
-texTotem[2] = LoadTexture("img/totem3.png");
-texTotem[3] = LoadTexture("img/totem4.png");
+    Texture2D texTotem[4];
+    texTotem[0] = LoadTexture("img/totem1.png");
+    texTotem[1] = LoadTexture("img/totem2.png");
+    texTotem[2] = LoadTexture("img/totem3.png");
+    texTotem[3] = LoadTexture("img/totem4.png");
 
-// Totem Animation Variables
-float totemAnimTimer = 0.0f;
-int currentTotemFrame = 0;
+    // Totem Animation Variables
+    float totemAnimTimer = 0.0f;
+    int currentTotemFrame = 0;
 
-// --- Load Spike Textures ---
+    // --- Load Spike Textures ---
     Texture2D texSpike[2];
     texSpike[0] = LoadTexture("img/spike1.png");
     texSpike[1] = LoadTexture("img/spike2.png");
@@ -392,7 +392,7 @@ int currentTotemFrame = 0;
     Camera2D camera = {0};
     camera.target = (Vector2){P.x, P.y};                        // what it looks at
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
-    camera.zoom = 0.4f;
+    camera.zoom = 0.8f;
 
     while (!WindowShouldClose())
     {
@@ -402,8 +402,8 @@ int currentTotemFrame = 0;
                 state = Playing;
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText("LDF PRESENTS", screen_w / 2 - 400, screen_h/ 2-300, 100, RED);
-            DrawText("UNTITLED DUNGEON CRAWLER", screen_w / 2-750, screen_h/ 2+100, 100, RED);
+            DrawText("LDF PRESENTS", screen_w / 2 - 400, screen_h / 2 - 300, 100, RED);
+            DrawText("UNTITLED DUNGEON CRAWLER", screen_w / 2 - 750, screen_h / 2 + 100, 100, RED);
             EndDrawing();
         }
         if (state == Pausemenu)
@@ -414,21 +414,20 @@ int currentTotemFrame = 0;
                 state = Mainmenu;
             BeginDrawing();
             ClearBackground(BLACK);
-            Rectangle pauseSrc  = {0, 0, (float)texPauseMenu.width, (float)texPauseMenu.height}; //starts from 0,0 pixel from the main image
-            Rectangle pauseDest = {0, 0, (float)screen_w, (float)screen_h}; //where, and how big, to draw it on screen, describes rectangle on screen
-            DrawTexturePro(texPauseMenu, pauseSrc, pauseDest, (Vector2){0, 0}, 0.0f, WHITE); //0.0f means no rotation
+            Rectangle pauseSrc = {0, 0, (float)texPauseMenu.width, (float)texPauseMenu.height}; // starts from 0,0 pixel from the main image
+            Rectangle pauseDest = {0, 0, (float)screen_w, (float)screen_h};                     // where, and how big, to draw it on screen, describes rectangle on screen
+            DrawTexturePro(texPauseMenu, pauseSrc, pauseDest, (Vector2){0, 0}, 0.0f, WHITE);    // 0.0f means no rotation
             EndDrawing();
         }
         if (state == Playing)
         {
             if (IsKeyPressed(KEY_ESCAPE))
             {
-            state = Pausemenu;
-            BeginDrawing();
-            ClearBackground(BLACK);
-            EndDrawing();
+                state = Pausemenu;
+                BeginDrawing();
+                ClearBackground(BLACK);
+                EndDrawing();
             }
-               
 
             // Gate is always open (doorOpen stays true) -- no enemies-dead
             // gating for now. If that comes back later, set doorOpen here
@@ -464,7 +463,7 @@ int currentTotemFrame = 0;
                 }
                 // --- Update Archer Animation Timer ---
                 archerAnimTimerWalk += dt;
-                if (archerAnimTimerWalk >= 0.15f) 
+                if (archerAnimTimerWalk >= 0.15f)
                 {
                     currentArcherWalkFrame = (currentArcherWalkFrame + 1) % 2;
                     archerAnimTimerWalk = 0.0f;
@@ -490,12 +489,12 @@ int currentTotemFrame = 0;
                 // so that motion stays smooth regardless of the 2-frame swap timing above.
                 mimicWalkCycleTimer += dt;
                 // --- Update Totem Animation Timer ---
-totemAnimTimer += dt;
-if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
-{
-    currentTotemFrame = (currentTotemFrame + 1) % 4;
-    totemAnimTimer = 0.0f;
-}
+                totemAnimTimer += dt;
+                if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
+                {
+                    currentTotemFrame = (currentTotemFrame + 1) % 4;
+                    totemAnimTimer = 0.0f;
+                }
                 UpdateSpikeKnockback(&P, dt);
 
                 bool wasDashing = P.dashing;
@@ -698,13 +697,13 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                 spiritupdate(&en, &P, dt);
                 spiritupdate(&en2, &P, dt);
 
-                // --- Level 2 "upper platform" spirit/dragon spawner ---
+                //  Level 2 "upper platform" spirit/dragon spawner
                 // Only relevant on level 2, and only when nothing from this pool is
                 // currently alive. Picks a type at random (forced to whichever type
                 // still has some left, if only one does), and resets its stats fresh.
                 // Spirit spawns in the open air around the topmost platform; dragon
-                // spawns lower down, under platform 4 (row 15, cols 37-49), in the
-                // open air of rows 16-17 -- not right up on the topmost platform.
+                // spawns lower down, under platform 4, in the
+                // open air of rows not right up on the topmost platform.
                 if (currentLevel == 2 && !en2.alive && !dragon.alive && (spiritsToSpawn > 0 || dragonsToSpawn > 0))
                 {
                     bool spawnSpirit;
@@ -1201,12 +1200,12 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                         if (maps[currentLevel][i][j] == 1)
                             DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, GRAY);
                         if (maps[currentLevel][i][j] == 3)
-                            // DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
-                            // // if (maps[currentLevel][i][j] == 3)
+                        // DrawRectangle((j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE, ORANGE); // spike
+                        // // if (maps[currentLevel][i][j] == 3)
                         {
                             Texture2D currentSpikeTex = texSpike[currentSpikeFrame];
-                            Rectangle spikeSrc = { 0.0f, 0.0f, (float)currentSpikeTex.width, (float)currentSpikeTex.height };
-                            Rectangle spikeDest = { (j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE };
+                            Rectangle spikeSrc = {0.0f, 0.0f, (float)currentSpikeTex.width, (float)currentSpikeTex.height};
+                            Rectangle spikeDest = {(j * TILE_SIZE), (i * TILE_SIZE), TILE_SIZE, TILE_SIZE};
                             DrawTexturePro(currentSpikeTex, spikeSrc, spikeDest, (Vector2){0, 0}, 0.0f, WHITE);
                         }
                         if (maps[currentLevel][i][j] == 2) // door
@@ -1358,19 +1357,20 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                         }
                     }
                 }
-   // --- Draw Archer Enemies (Hitbox + Sprite) ---
+                // --- Draw Archer Enemies (Hitbox + Sprite) ---
                 for (int i = 0; i < archerCount; i++)
                 {
                     if (archers[i].alive && archers[i].level == currentLevel)
                     {
-                        // 1. Draw the Hitbox Reference 
+                        // 1. Draw the Hitbox Reference
                         // DrawRectangle(archers[i].x, archers[i].y, 100, 200, (archerHitFlashTimer[i] > 0.0f) ? RED : PURPLE);
 
                         // 2. Determine and Draw the Sprite
                         Texture2D currentArcherTex = texArcherIdle;
 
                         // Detect if the archer just fired (timer jumps back up to max)
-                        if (archers[i].attacktimer > archerPrevAttackTimer[i] + 0.5f) {
+                        if (archers[i].attacktimer > archerPrevAttackTimer[i] + 0.5f)
+                        {
                             archerSpawnTimer[i] = 0.2f; // Trigger 2-frame spawn animation
                         }
                         archerPrevAttackTimer[i] = archers[i].attacktimer;
@@ -1380,44 +1380,46 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                         archerPrevX[i] = archers[i].x;
 
                         // State Machine: Spawn -> Attack -> Walk -> Idle
-                        if (archerSpawnTimer[i] > 0.0f) 
+                        if (archerSpawnTimer[i] > 0.0f)
                         {
                             archerSpawnTimer[i] -= dt;
-                            int frame = (archerSpawnTimer[i] > 0.1f) ? 0 : 1; 
+                            int frame = (archerSpawnTimer[i] > 0.1f) ? 0 : 1;
                             currentArcherTex = texArcherSpawn[frame];
                         }
-                        else if (archers[i].attacktimer < 0.4f && archers[i].attacktimer > 0.0f) 
+                        else if (archers[i].attacktimer < 0.4f && archers[i].attacktimer > 0.0f)
                         {
                             // Play 4-frame throw animation in the final 0.4s before firing
                             int frame = (int)((0.4f - archers[i].attacktimer) / 0.1f);
-                            if (frame > 3) frame = 3;
-                            if (frame < 0) frame = 0;
+                            if (frame > 3)
+                                frame = 3;
+                            if (frame < 0)
+                                frame = 0;
                             currentArcherTex = texArcherAttack[frame];
                         }
-                        else if (isWalking) 
+                        else if (isWalking)
                         {
                             currentArcherTex = texArcherWalk[currentArcherWalkFrame];
                         }
-                        else 
+                        else
                         {
                             currentArcherTex = texArcherIdle;
                         }
 
                         // Handle Direction / Horizontal Flip
                         float sourceWidth = (float)currentArcherTex.width;
-                        if (archers[i].direction == -1) 
+                        if (archers[i].direction == -1)
                         {
-                            sourceWidth = -sourceWidth; 
+                            sourceWidth = -sourceWidth;
                         }
-                        Rectangle sourceRec = { 0.0f, 0.0f, sourceWidth, (float)currentArcherTex.height };
+                        Rectangle sourceRec = {0.0f, 0.0f, sourceWidth, (float)currentArcherTex.height};
 
                         // Maintain Aspect Ratio based on the 200px tall hitbox, scaled up by 30%
                         float archerAspect = (float)currentArcherTex.width / (float)currentArcherTex.height;
                         float archerDrawHeight = 260.0f; // Increased by 30% (from 200.0f)
                         float archerDrawWidth = archerAspect * archerDrawHeight;
-                        
+
                         // Center horizontally over the 100px hitbox
-                        float offsetX = (archerDrawWidth - 100.0f) / 2.0f; 
+                        float offsetX = (archerDrawWidth - 100.0f) / 2.0f;
                         // Offset vertically so the larger sprite doesn't sink into the floor
                         float offsetY = archerDrawHeight - 200.0f;
 
@@ -1425,11 +1427,10 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                             archers[i].x - offsetX,
                             archers[i].y - offsetY,
                             archerDrawWidth,
-                            archerDrawHeight
-                        };
-                        
+                            archerDrawHeight};
+
                         Color archerTint = (archerHitFlashTimer[i] > 0.0f) ? RED : WHITE;
-                        DrawTexturePro(currentArcherTex, sourceRec, destRec, (Vector2){0,0}, 0.0f, archerTint);
+                        DrawTexturePro(currentArcherTex, sourceRec, destRec, (Vector2){0, 0}, 0.0f, archerTint);
                     }
                 }
                 for (int i = 0; i < totemCount; i++)
@@ -1454,13 +1455,12 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                             totems[i].x - offsetX,
                             totems[i].y - offsetY,
                             totemDrawWidth,
-                            totemDrawHeight
-                        };
+                            totemDrawHeight};
 
                         // Retain the red damage flash logic
                         Color totemTint = (totemHitFlashTimer[i] > 0.0f) ? RED : WHITE;
 
-                        DrawTexturePro(currentTotemTex, sourceRec, destRec, (Vector2){0,0}, 0.0f, totemTint);
+                        DrawTexturePro(currentTotemTex, sourceRec, destRec, (Vector2){0, 0}, 0.0f, totemTint);
                     }
                 }
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
@@ -1500,21 +1500,20 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
                 if (dragon.dstate == Dattacking && dragon.alive == true)
                     DrawRectangleRec(dragon.firerect, WHITE);
 
-               // --- Draw Cake Arrows ---
+                // --- Draw Cake Arrows ---
                 for (int i = 0; i < MAX_ARROWS; i++)
                 {
-                    if (arrows[i].alive) 
+                    if (arrows[i].alive)
                     {
-                        float cakeDrawSize = 85.0f; 
-                        Rectangle cakeSrc = { 0.0f, 0.0f, (float)texCake.width, (float)texCake.height };
-                        
+                        float cakeDrawSize = 85.0f;
+                        Rectangle cakeSrc = {0.0f, 0.0f, (float)texCake.width, (float)texCake.height};
+
                         // Center cake visually on the coordinate point
                         Rectangle cakeDest = {
                             arrows[i].x - cakeDrawSize / 2.0f,
                             arrows[i].y - cakeDrawSize / 2.0f,
                             cakeDrawSize,
-                            cakeDrawSize
-                        };
+                            cakeDrawSize};
                         DrawTexturePro(texCake, cakeSrc, cakeDest, (Vector2){0, 0}, 0.0f, WHITE);
                     }
                 }
@@ -1544,11 +1543,11 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
             if (IsKeyPressed(KEY_ENTER))
             {
                 state = Mainmenu; // no type, just assignment
-                currentLevel = 2; // reset to the same level the game boots into
+                currentLevel = 0; // reset to the same level the game boots into
                 Vector2 resetSpawn = GetLevelBottomLeftSpawn(currentLevel);
                 P.x = resetSpawn.x;
                 P.y = resetSpawn.y;
-                P.health = 100.0f;
+                P.health = 1000.0f;
                 P.velocityY = 0;
                 P.iframes = 0;
                 P.dashing = false;
@@ -1639,7 +1638,7 @@ if (totemAnimTimer >= 0.15f) // Switch frames every 0.15 seconds
         {
             BeginDrawing();
             ClearBackground(BLACK);
-            Rectangle winSrc  = {0, 0, (float)texWin.width, (float)texWin.height};
+            Rectangle winSrc = {0, 0, (float)texWin.width, (float)texWin.height};
             Rectangle winDest = {0, 0, (float)screen_w, (float)screen_h};
             DrawTexturePro(texWin, winSrc, winDest, (Vector2){0, 0}, 0.0f, WHITE);
             EndDrawing();
@@ -1704,19 +1703,22 @@ shutdown:
     UnloadTexture(texMimicCharge);
     for (int i = 0; i < 2; i++)
         UnloadTexture(texMimicParticle[i]);
-        UnloadTexture(texArcherIdle);
-    for (int i = 0; i < 2; i++) UnloadTexture(texArcherWalk[i]);
-    for (int i = 0; i < 4; i++) UnloadTexture(texArcherAttack[i]);
-    for (int i = 0; i < 2; i++) UnloadTexture(texArcherSpawn[i]);
+    UnloadTexture(texArcherIdle);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texArcherWalk[i]);
+    for (int i = 0; i < 4; i++)
+        UnloadTexture(texArcherAttack[i]);
+    for (int i = 0; i < 2; i++)
+        UnloadTexture(texArcherSpawn[i]);
     UnloadTexture(texCake);
     // --- Unload Totem Textures ---
-for (int i = 0; i < 4; i++) 
-{
-    UnloadTexture(texTotem[i]);
-}
+    for (int i = 0; i < 4; i++)
+    {
+        UnloadTexture(texTotem[i]);
+    }
 
-// --- Unload Spike Textures ---
-    for (int i = 0; i < 2; i++) 
+    // --- Unload Spike Textures ---
+    for (int i = 0; i < 2; i++)
     {
         UnloadTexture(texSpike[i]);
     }
