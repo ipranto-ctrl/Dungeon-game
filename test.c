@@ -187,6 +187,15 @@ int main(void)
 
     // UFO Texture Load
     Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
+
+    // UFO Laser Beam Texture Load (5-frame animation played while the dragon/UFO is firing)
+    Texture2D texBeam[5];
+    texBeam[0] = LoadTexture("img/beam1.png");
+    texBeam[1] = LoadTexture("img/beam2.png");
+    texBeam[2] = LoadTexture("img/beam3.png");
+    texBeam[3] = LoadTexture("img/beam4.png");
+    texBeam[4] = LoadTexture("img/beam5.png");
+
     // Level Background Textures (one per level, indexed by currentLevel)
 Texture2D texLevelBG[3];
 texLevelBG[0] = LoadTexture("img/level0bg.png"); // 1248x848
@@ -320,6 +329,13 @@ Texture2D texTile[3];
     float dragonPrevHealth = dragon.health;
     float dragonHitFlashTimer = 0.0f;
     const float DRAGON_HIT_FLASH_DURATION = 0.15f;
+
+    // UFO Laser Beam Animation Variables -- cycles through the 5 beam frames
+    // while the dragon/UFO is actively firing (dstate == Dattacking), looping
+    // for as long as the attack lasts.
+    float beamAnimTimer = 0.0f;
+    int currentBeamFrame = 0;
+    const float BEAM_FRAME_DURATION = 0.06f; // time each beam frame is shown; tune to taste
 
     // Animation Variables
     float sprintAnimTimer = 0.0f;
@@ -670,9 +686,35 @@ Texture2D texTile[3];
                     }
                 }
 
+                bool wasDragonAttacking = (dragon.dstate == Dattacking); // captured before this frame's update, to detect the beam starting below
+
                 DragonCollisionX(&dragon, dt);
                 DragonCollisionY(&dragon);
                 UpdateDragon(&dragon, &P, dt, AttackCheck, &AttackRect);
+
+                // --- Update UFO Laser Beam Animation ---
+                // Restart the cycle on the rising edge (attack just started), then
+                // loop through the 5 frames for as long as the dragon stays in
+                // Dattacking so the beam reads as a continuous laser.
+                if (dragon.dstate == Dattacking)
+                {
+                    if (!wasDragonAttacking)
+                    {
+                        beamAnimTimer = 0.0f;
+                        currentBeamFrame = 0;
+                    }
+                    beamAnimTimer += dt;
+                    if (beamAnimTimer >= BEAM_FRAME_DURATION)
+                    {
+                        currentBeamFrame = (currentBeamFrame + 1) % 5;
+                        beamAnimTimer = 0.0f;
+                    }
+                }
+                else
+                {
+                    beamAnimTimer = 0.0f;
+                    currentBeamFrame = 0;
+                }
 
                 if (dragon.health < dragonPrevHealth)
                 {
@@ -1530,8 +1572,33 @@ Texture2D texTile[3];
 
                     DrawTexturePro(texUFO, ufoSrc, ufoDest, ufoOrigin, 0.0f, dragonTint);
                 }
+                // --- Draw UFO Laser Beam ---
+                // dragon.firerect (built in enemies.c) is a tall vertical rectangle
+                // firing straight DOWN from the UFO's belly (width 300, height 1500),
+                // roughly centered under the sprite -- not a sideways bolt, so there's
+                // no direction-based flip/offset here.
                 if (dragon.dstate == Dattacking && dragon.alive == true)
-                    DrawRectangleRec(dragon.firerect, WHITE);
+                {
+                    Texture2D currentBeamTex = texBeam[currentBeamFrame];
+                    Rectangle beamSrc = {0.0f, 0.0f, (float)currentBeamTex.width, (float)currentBeamTex.height};
+                    Color beamTint = (dragonHitFlashTimer > 0.0f) ? RED : WHITE;
+
+                    // Visual-only fix for the gap between the UFO's belly and the beam:
+                    // firerect.y already starts exactly at the UFO sprite's bottom edge,
+                    // so the visible gap is almost certainly empty/transparent padding
+                    // baked into the top of the beam1-5.png art itself. Pull the drawn
+                    // rectangle's top edge up (behind/into the ship sprite, so the padding
+                    // is hidden there) and grow the height to compensate. The real hitbox
+                    // (dragon.firerect, used for collision above) is left untouched.
+                    // Raise this if a gap is still visible; lower/zero it if the beam art
+                    // now pokes up too far into the ship.
+                    const float BEAM_VISUAL_OVERLAP = 30.0f;
+                    Rectangle beamDest = dragon.firerect;
+                    beamDest.y -= BEAM_VISUAL_OVERLAP;
+                    beamDest.height += BEAM_VISUAL_OVERLAP;
+
+                    DrawTexturePro(currentBeamTex, beamSrc, beamDest, (Vector2){0.0f, 0.0f}, 0.0f, beamTint);
+                }
 
                 // --- Draw Cake Arrows ---
                 for (int i = 0; i < MAX_ARROWS; i++)
@@ -1726,6 +1793,9 @@ for (int i = 0; i < 3; i++)
     UnloadTexture(spiritAfterBurst);
 
     UnloadTexture(texUFO);
+    // --- Unload UFO Laser Beam Textures ---
+    for (int i = 0; i < 5; i++)
+        UnloadTexture(texBeam[i]);
 
     // --- Unload Bull Textures ---
     UnloadTexture(texBullIdle);
