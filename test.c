@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "player.h"
 #include "tilemap.h"
 #include "enemies.h"
@@ -20,13 +21,16 @@ int main(void)
 {
     typedef enum
     {
+        Start1,
+        Start2,
+        Start3,
         Mainmenu,
         Playing,
         Pausemenu,
         Gameover,
         Win
     } Gamestate;
-    Gamestate state = Mainmenu;
+    Gamestate state = Start1;
     Vector2 bootSpawn = GetLevelBottomLeftSpawn(currentLevel); // bottom-left-most safe tile of the boot level
     Player P = {
         bootSpawn.x, // x
@@ -39,8 +43,8 @@ int main(void)
         0.0f,        // velocityY
         15,          // damage
         0.0f,        // attackcooldown
-        100000000.0f,      // health
-        100000000.0f,      // maxhealth
+        1000.0f,      // health
+        1000.0f,      // maxhealth
         .5f,         // iframes
         true,        // onground
         true,        // doublejump
@@ -167,6 +171,21 @@ int main(void)
     // down as each one is spawned (not as they die).
     int spiritsToSpawn = 3;
     int dragonsToSpawn = 3;
+    // Snapshot of each enemy's original configuration (position, health, alive
+    // state, level) so death/respawn restores exactly this instead of manually
+    // re-deriving values -- which previously drifted and accidentally revived
+    // enemies that were deliberately disabled (e.g. the level-0 mimics/archers).
+    Bull bulls_init[6];
+    memcpy(bulls_init, bulls, sizeof(bulls));
+    Mimic mimics_init[6];
+    memcpy(mimics_init, mimics, sizeof(mimics));
+    Archer archers_init[6];
+    memcpy(archers_init, archers, sizeof(archers));
+    Totem totems_init[3];
+    memcpy(totems_init, totems, sizeof(totems));
+    Dragon dragon_init = dragon;
+    Spirit en_init = en;
+    Spirit en2_init = en2;
 
     // float timer = 1; dont know what i used this for
 
@@ -179,11 +198,19 @@ int main(void)
     Texture2D spiritBurst = LoadTexture("Sprite/100x100_Burst.png");
     Texture2D spiritAfterBurst = LoadTexture("Sprite/300x100_AfterBurst.png");
 
+    // Start Screen Textures (shown in sequence before the main menu)
+    Texture2D texStartScreen[3];
+    texStartScreen[0] = LoadTexture("img/start_screen1.png");
+    texStartScreen[1] = LoadTexture("img/start_screen2.png");
+    texStartScreen[2] = LoadTexture("img/start_screen3.png");
+
     // Pause Menu texture Load
     Texture2D texPauseMenu = LoadTexture("img/pause_menu.png");
 
     // Win screen texture Load (shown after clearing the final level's gate)
     Texture2D texWin = LoadTexture("img/GameOver.png");
+    // Defeat screen texture Load
+    Texture2D texDefeat = LoadTexture("img/defeat.png");
 
     // UFO Texture Load
     Texture2D texUFO = LoadTexture("img/UFO_IMG.png");
@@ -197,14 +224,14 @@ int main(void)
     texBeam[4] = LoadTexture("img/beam5.png");
 
     // Level Background Textures (one per level, indexed by currentLevel)
-Texture2D texLevelBG[3];
-texLevelBG[0] = LoadTexture("img/level0bg.png"); // 1248x848
-texLevelBG[1] = LoadTexture("img/level1bg.png"); // 1521x1034
-texLevelBG[2] = LoadTexture("img/level2bg.png"); // 1521x1034
+    Texture2D texLevelBG[3];
+    texLevelBG[0] = LoadTexture("img/level0bg.png"); // 1248x848
+    texLevelBG[1] = LoadTexture("img/level1bg.png"); // 1521x1034
+    texLevelBG[2] = LoadTexture("img/level2bg.png"); // 1521x1034
 
-Texture2D texTile[3];
-    texTile[0] = LoadTexture("img/level0tile.png"); 
-    texTile[1] = LoadTexture("img/level1tile.png"); 
+    Texture2D texTile[3];
+    texTile[0] = LoadTexture("img/level0tile.png");
+    texTile[1] = LoadTexture("img/level1tile.png");
     texTile[2] = LoadTexture("img/level2tile.png");
     SetExitKey(KEY_DELETE);
     HideCursor();
@@ -419,8 +446,106 @@ Texture2D texTile[3];
     camera.offset = (Vector2){screen_w / 2 - 50, screen_h / 2}; // where on screen
     camera.zoom = 0.8f;
 
+    // --- Start-screen fade transition state ---
+    // fade == FadeNone: whatever start screen is up sits fully visible.
+    // ENTER is pressed -> FadeOut begins (fadeAlpha climbs 0->255, screen
+    // darkens to black). Once fully black, `state` swaps to the next screen
+    // and we drop straight into FadeIn (fadeAlpha falls 255->0, revealing the
+    // new screen). This is also what "the game starts" rides on: Start3's
+    // pendingState is Playing, so the same fade carries us into gameplay.
+    typedef enum
+    {
+        FadeNone,
+        FadeOut,
+        FadeIn
+    } FadeState;
+    FadeState fade = FadeNone;
+    float fadeAlpha = 0.0f;          // 0 = fully visible, 255 = fully black
+    const float FADE_SPEED = 400.0f; // alpha units/sec -- ~0.64s to fade fully out or in
+    Gamestate pendingState = Start1; // state to switch to the instant the fade-out completes
+
+    // Slow blink for the "PRESS ENTER TO CONTINUE" prompt on the start screens
+    float startPromptBlinkTimer = 0.0f;
+    bool startPromptVisible = true;
+    const float START_PROMPT_BLINK_INTERVAL = 0.6f;
+
     while (!WindowShouldClose())
     {
+        // --- Advance any in-progress fade every frame, regardless of state ---
+        if (fade == FadeOut)
+        {
+            fadeAlpha += FADE_SPEED * GetFrameTime();
+            if (fadeAlpha >= 255.0f)
+            {
+                fadeAlpha = 255.0f;
+                state = pendingState; // screen is fully black now -- swap the picture underneath
+                fade = FadeIn;
+            }
+        }
+        else if (fade == FadeIn)
+        {
+            fadeAlpha -= FADE_SPEED * GetFrameTime();
+            if (fadeAlpha <= 0.0f)
+            {
+                fadeAlpha = 0.0f;
+                fade = FadeNone;
+            }
+        }
+
+        if (state == Start1 || state == Start2 || state == Start3)
+        {
+            // Blink the "PRESS ENTER TO CONTINUE" prompt
+            startPromptBlinkTimer += GetFrameTime();
+            if (startPromptBlinkTimer >= START_PROMPT_BLINK_INTERVAL)
+            {
+                startPromptVisible = !startPromptVisible;
+                startPromptBlinkTimer = 0.0f;
+            }
+
+            // Only accept ENTER while no fade is already running, so a single
+            // press can't chain through multiple screens before each fade
+            // visually finishes.
+            if (fade == FadeNone && IsKeyPressed(KEY_ENTER))
+            {
+                if (state == Start1)
+                    pendingState = Start2;
+                else if (state == Start2)
+                    pendingState = Start3;
+                else // Start3 -- the game itself starts after this fade
+                    pendingState = Playing;
+                fade = FadeOut;
+            }
+
+            Texture2D screenTex = texStartScreen[state - Start1]; // Start1=0, Start2=1, Start3=2
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+            Rectangle src = {0.0f, 0.0f, (float)screenTex.width, (float)screenTex.height};
+            Rectangle dest = {0.0f, 0.0f, (float)screen_w, (float)screen_h};
+            DrawTexturePro(screenTex, src, dest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+
+            if (startPromptVisible)
+            {
+                const char *promptText = "PRESS ENTER TO CONTINUE";
+                int fontSize = 30;
+                int textWidth = MeasureText(promptText, fontSize);
+                DrawText(promptText, screen_w / 2 - textWidth / 2, screen_h - 80, fontSize, WHITE);
+                if (state == Start3)
+                {
+                    const char *hintText = "HINT : USE DASHES AND DOUBLE JUMPS MORE";
+                    int hintFontSize = 26;
+                    int hintTextWidth = MeasureText(hintText, hintFontSize);
+                    DrawText(hintText, screen_w / 2 - hintTextWidth / 2, screen_h - 130, hintFontSize, RED);
+                }
+            }
+
+            // Fade overlay drawn last, on top of the image and the prompt text
+            if (fadeAlpha > 0.0f)
+            {
+                DrawRectangle(0, 0, screen_w, screen_h, Fade(BLACK, fadeAlpha / 255.0f));
+            }
+            EndDrawing();
+        }
         if (state == Mainmenu)
         {
             if (IsKeyPressed(KEY_ENTER))
@@ -436,12 +561,31 @@ Texture2D texTile[3];
             if (IsKeyPressed(KEY_ENTER))
                 state = Playing;
             if (IsKeyPressed(KEY_ESCAPE))
-                state = Mainmenu;
+            // state = Mainmenu;
+            {
+                if (IsWindowFullscreen())
+                    ToggleFullscreen();
+                ShowCursor();
+                goto shutdown;
+            }
             BeginDrawing();
             ClearBackground(BLACK);
             Rectangle pauseSrc = {0, 0, (float)texPauseMenu.width, (float)texPauseMenu.height}; // starts from 0,0 pixel from the main image
             Rectangle pauseDest = {0, 0, (float)screen_w, (float)screen_h};                     // where, and how big, to draw it on screen, describes rectangle on screen
-            DrawTexturePro(texPauseMenu, pauseSrc, pauseDest, (Vector2){0, 0}, 0.0f, WHITE);    // 0.0f means no rotation
+            DrawTexturePro(texPauseMenu, pauseSrc, pauseDest, (Vector2){0, 0}, 0.0f, WHITE);
+            if (fmod(GetTime(), 0.6) < 0.3)
+            {
+                const char *resumeText = "PRESS ENTER TO RESUME";
+                const char *quitText = "PRESS ESC TO QUIT";
+                int fontSize = 30;
+
+                int resumeWidth = MeasureText(resumeText, fontSize);
+                int quitWidth = MeasureText(quitText, fontSize);
+
+                // Draws centered near the bottom of the screen
+                DrawText(resumeText, screen_w / 2 - resumeWidth / 2, screen_h - 130, fontSize, WHITE);
+                DrawText(quitText, screen_w / 2 - quitWidth / 2, screen_h - 80, fontSize, RED);
+            } // 0.0f means no rotation
             EndDrawing();
         }
         if (state == Playing)
@@ -818,12 +962,12 @@ Texture2D texTile[3];
                 ClearBackground(BLACK);
                 BeginMode2D(camera);
                 // --- Draw level background (world-space, so it pans/zooms with camera) ---
-{
-    Texture2D bgTex = texLevelBG[currentLevel];
-    Rectangle bgSrc = {0.0f, 0.0f, (float)bgTex.width, (float)bgTex.height};
-    Rectangle bgDest = {0.0f, 0.0f, (float)(MAP_COLS * TILE_SIZE), (float)(MAP_ROWS * TILE_SIZE)};
-    DrawTexturePro(bgTex, bgSrc, bgDest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
-}
+                {
+                    Texture2D bgTex = texLevelBG[currentLevel];
+                    Rectangle bgSrc = {0.0f, 0.0f, (float)bgTex.width, (float)bgTex.height};
+                    Rectangle bgDest = {0.0f, 0.0f, (float)(MAP_COLS * TILE_SIZE), (float)(MAP_ROWS * TILE_SIZE)};
+                    DrawTexturePro(bgTex, bgSrc, bgDest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+                }
                 // --- NEW: Determine which texture to draw ---
                 Texture2D currentTex = texIdle;
 
@@ -1640,88 +1784,74 @@ Texture2D texTile[3];
         // for as long as `state` holds that value.
         if (state == Gameover)
         {
+            // --- NEW: Update the blink timer for the Game Over prompt ---
+            startPromptBlinkTimer += GetFrameTime();
+            if (startPromptBlinkTimer >= START_PROMPT_BLINK_INTERVAL)
+            {
+                startPromptVisible = !startPromptVisible;
+                startPromptBlinkTimer = 0.0f;
+            }
+
             if (IsKeyPressed(KEY_ENTER))
             {
-                state = Mainmenu; // no type, just assignment
-                currentLevel = 0; // reset to the same level the game boots into
+                state = Playing;
+                // Respawn on the level the player died on -- currentLevel is left
+                // untouched (it used to be hard-reset to 0 here).
                 Vector2 resetSpawn = GetLevelBottomLeftSpawn(currentLevel);
                 P.x = resetSpawn.x;
                 P.y = resetSpawn.y;
-                P.health = 1000.0f;
+                P.health = P.maxHealth; // full heal, not an arbitrary bumped-up value
                 P.velocityY = 0;
                 P.iframes = 0;
                 P.dashing = false;
                 P.onground = true;
                 P.doublejump = true;
 
-                en.alive = true;
-                en.x = 200.0f;
-                en.y = 200.0f;
-                en.spiritcollision = false;
-                en.knockbackduration = 0;
-
-                // Level 2 upper-platform pool -- back to dormant, fresh counts;
-                // the spawner in the main loop brings the first one in.
-                en2.alive = false;
-                en2.spiritcollision = false;
-                en2.knockbackduration = 0;
+                // Restore every enemy array from the snapshot taken at game start.
+                // This resets position/health/state AND each enemy's original "alive"
+                // flag, so enemies deliberately disabled on a given level stay disabled
+                // instead of being force-revived.
+                memcpy(bulls, bulls_init, sizeof(bulls));
+                memcpy(mimics, mimics_init, sizeof(mimics));
+                memcpy(archers, archers_init, sizeof(archers));
+                memcpy(totems, totems_init, sizeof(totems));
+                dragon = dragon_init;
+                en = en_init;
+                en2 = en2_init;
                 spiritsToSpawn = 3;
                 dragonsToSpawn = 3;
 
                 for (int i = 0; i < mimicCount; i++)
                 {
-                    mimics[i].alive = true;
-                    mimics[i].health = 100.0f;
-                    mimics[i].mstate = MIdle;
-                    mimics[i].playerknockbacktimer = 0;
-                    mimics[i].knockbackduration = 0;
-                    mimicPrevHealth[i] = 100.0f;
+                    mimicPrevHealth[i] = mimics[i].health;
                     mimicHitFlashTimer[i] = 0.0f;
                     mimicAttackAnimActive[i] = false;
                     mimicAttackAnimTimer[i] = 0.0f;
                     mimicParticleTimer[i] = 0.0f;
                     mimicParticleRect[i] = (Rectangle){0};
                 }
-
                 for (int i = 0; i < bullCount; i++)
                 {
-                    bulls[i].alive = true;
-                    bulls[i].health = 90.0f;
-                    bulls[i].state = Idle;
-                    bulls[i].speed = 100.0f;
-                    bullPrevHealth[i] = 90.0f;
+                    bullPrevHealth[i] = bulls[i].health;
                     bullHitFlashTimer[i] = 0.0f;
                 }
                 for (int i = 0; i < archerCount; i++)
                 {
-                    archers[i].alive = true;
-                    archers[i].health = 80.0f;
-                    archers[i].Astate = AIdle;
-                    archers[i].attacktimer = 2.0f;
-                    archerPrevHealth[i] = 80.0f;
+                    archerPrevHealth[i] = archers[i].health;
                     archerHitFlashTimer[i] = 0.0f;
+                    archerSpawnTimer[i] = 0.0f;
+                    archerPrevAttackTimer[i] = archers[i].attacktimer;
+                    archerPrevX[i] = archers[i].x;
                 }
                 for (int i = 0; i < MAX_ARROWS; i++)
                     arrows[i].alive = false;
 
-                dragon.alive = false;
-                dragon.health = 50.0f;
-                dragon.dstate = Didle;
-                dragon.x = 1500.0f;
-                dragon.y = 500.0f;
-                dragon.wallDropSpeed = 0;
-                dragon.playerknockbacktimer = 0;
-                dragon.playerecoil = 0;
-                dragonPrevHealth = 50.0f;
+                dragonPrevHealth = dragon.health;
                 dragonHitFlashTimer = 0.0f;
 
                 for (int i = 0; i < totemCount; i++)
                 {
-                    totems[i].alive = true;
-                    totems[i].health = 60.0f;
-                    totems[i].attacktimer = totems[i].maxattacktimer;
-                    totems[i].knockbackduration = 0;
-                    totemPrevHealth[i] = 60.0f;
+                    totemPrevHealth[i] = totems[i].health;
                     totemHitFlashTimer[i] = 0.0f;
                 }
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
@@ -1729,8 +1859,19 @@ Texture2D texTile[3];
             }
             BeginDrawing();
             ClearBackground(BLACK);
-            DrawText("GAME OVER", screen_w / 2 - 150, screen_h / 2, 50, RED);
-            DrawText("Press ENTER to restart", screen_w / 2 - 150, screen_h / 2 + 60, 30, WHITE);
+            Rectangle defeatSrc = {0, 0, (float)texDefeat.width, (float)texDefeat.height};
+            Rectangle defeatDest = {0, 0, (float)screen_w, (float)screen_h};
+            DrawTexturePro(texDefeat, defeatSrc, defeatDest, (Vector2){0, 0}, 0.0f, WHITE);
+
+            // --- Wrap the prompt in the visibility toggle ---
+            if (startPromptVisible)
+            {
+                const char *restartText = "PRESS ENTER TO RESTART";
+                int fontSize = 30;
+                int textWidth = MeasureText(restartText, fontSize);
+                // Drawn centered near the bottom, similar to your Start/Win screens
+                DrawText(restartText, screen_w / 2 - textWidth / 2, screen_h - 80, fontSize, WHITE);
+            }
             EndDrawing();
         }
 
@@ -1741,6 +1882,18 @@ Texture2D texTile[3];
             Rectangle winSrc = {0, 0, (float)texWin.width, (float)texWin.height};
             Rectangle winDest = {0, 0, (float)screen_w, (float)screen_h};
             DrawTexturePro(texWin, winSrc, winDest, (Vector2){0, 0}, 0.0f, WHITE);
+
+            // --- FLICKERING PROMPT ---
+            // Toggles on/off every 0.3s
+            if (fmod(GetTime(), 0.6) < 0.3)
+            {
+                const char *winText = "PRESS ENTER TO CONTINUE";
+                int fontSize = 30;
+                int textWidth = MeasureText(winText, fontSize);
+                // Draws centered near the bottom of the screen
+                DrawText(winText, screen_w / 2 - textWidth / 2, screen_h - 80, fontSize, WHITE);
+            }
+
             EndDrawing();
 
             if (IsKeyPressed(KEY_ENTER))
@@ -1761,13 +1914,13 @@ Texture2D texTile[3];
         // --- NEW: Unload textures before closing ---
     }
 shutdown:
-// --- Unload Level Background Textures ---
-// --- Unload Level Background & Tile Textures ---
-for (int i = 0; i < 3; i++)
-{
-    UnloadTexture(texLevelBG[i]);
-    UnloadTexture(texTile[i]); // NEW: Unload tile textures
-}
+    // --- Unload Level Background Textures ---
+    // --- Unload Level Background & Tile Textures ---
+    for (int i = 0; i < 3; i++)
+    {
+        UnloadTexture(texLevelBG[i]);
+        UnloadTexture(texTile[i]); // NEW: Unload tile textures
+    }
     UnloadTexture(texIdle);
     for (int i = 0; i < 4; i++)
         UnloadTexture(texSprint[i]);
@@ -1832,11 +1985,23 @@ for (int i = 0; i < 3; i++)
     {
         UnloadTexture(texSpike[i]);
     }
+    // --- Unload Start Screen Textures ---
+    for (int i = 0; i < 3; i++)
+    {
+        UnloadTexture(texStartScreen[i]);
+    }
+
     // --- Unload Pause Menu Texture ---
     UnloadTexture(texPauseMenu);
 
     // --- Unload Win Screen Texture ---
     UnloadTexture(texWin);
+
+    // --- Unload Defeat Screen Texture ---
+    UnloadTexture(texDefeat);
+
+    CloseWindow();
+    return 0;
 
     CloseWindow();
     return 0;
