@@ -411,6 +411,7 @@ int main(void)
     texArcherSpawn[1] = LoadTexture("img/oldspawn2.png");
 
     Texture2D texCake = LoadTexture("img/cake.png");
+    Texture2D texBullet = LoadTexture("img/bullet.png"); // <-- ADD THIS LINE
 
     // Archer Animation Variables
     float archerAnimTimerWalk = 0.0f;
@@ -1685,7 +1686,20 @@ int main(void)
                 for (int i = 0; i < MAX_HOMING_BULLETS; i++)
                 {
                     if (homingBullets[i].alive)
-                        DrawCircle(homingBullets[i].x, homingBullets[i].y, 15, PINK);
+                    {
+                        // Set the render size to 30x30 to match the old 15px radius circle
+                        float bulletDrawSize = 30.0f; 
+                        Rectangle bulletSrc = { 0.0f, 0.0f, (float)texBullet.width, (float)texBullet.height };
+                        
+                        // Center the sprite on the bullet's x,y coordinates
+                        Rectangle bulletDest = {
+                            homingBullets[i].x - bulletDrawSize / 2.0f,
+                            homingBullets[i].y - bulletDrawSize / 2.0f,
+                            bulletDrawSize,
+                            bulletDrawSize
+                        };
+                        DrawTexturePro(texBullet, bulletSrc, bulletDest, (Vector2){0, 0}, 0.0f, WHITE);
+                    }
                 }
                 // if (dragon.alive)
                 //     DrawRectangle(dragon.x, dragon.y, 300, 200, DARKGREEN);
@@ -1974,6 +1988,7 @@ shutdown:
     for (int i = 0; i < 2; i++)
         UnloadTexture(texArcherSpawn[i]);
     UnloadTexture(texCake);
+    UnloadTexture(texBullet);
     // --- Unload Totem Textures ---
     for (int i = 0; i < 4; i++)
     {
